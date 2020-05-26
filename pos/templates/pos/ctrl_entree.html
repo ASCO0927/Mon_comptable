@@ -1,0 +1,53 @@
+{% extends "pos/base.html" %}
+
+{% block title %}Liste des entrées{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function () {
+        var table_article = $('#liste_articles').DataTable({
+            "bInfo": false,
+            "bPaginate": false,
+            "aaSorting": [],
+            language: {
+                search: "",
+                searchPlaceholder: "Recherche"
+            }
+        });
+
+    });
+</script>
+{% endblock %}
+
+{% block main %}
+<div class="container-fluid" style="margin-top: 50px; margin-bottom: 100px;">
+    <div class="row">
+        <div class="col-12" style="margin-bottom: 2%;"><a type="button" href="{% url 'pos:nouvelle_entree' user.id %}" class="btn btn-primary float-right">Nouvelle Entrée</a></div>
+        
+        <div class="col-12 table-responsive">
+            <table id="liste_articles" class="table table-striped table-bordered " style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Jour</th>
+                        <th>Heure</th>
+                        <th>Article</th>
+                        <th>Quantité</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entree in liste_entrees %}
+                    <tr>
+                        <td>{{ entree.jour }}</td>
+                        <td>{{ entree.heure }}</td>
+                        <td>{{ entree.article }}</td>
+                        <td>{{ entree.quantite }}</td>
+                        <td><a type="button" href="{% url 'pos:mod_entree' user.id entree.id %}" class="btn btn-primary">Modifier</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
