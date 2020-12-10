@@ -1,0 +1,101 @@
+{% extends "pos/base.html" %}
+
+{% block title %}Liste des clients{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function () {
+        var table_clients = $('#liste_clients').DataTable({
+            "bInfo": false,
+            "bPaginate": false,
+            "aaSorting": [1],
+            language: {
+                search: "",
+                searchPlaceholder: "Recherche"
+            }
+        });
+
+    });
+</script>
+{% endblock %}
+
+{% block main %}
+<div class="container-fluid" style="margin-top: 50px; margin-bottom: 100px;">
+    <h1>Historique des dépots</h1>
+    <div class="row" style="margin-bottom: 5%;">
+        <div class="col-12 table-responsive">
+            <table id="liste_clients" class="table table-striped table-bordered " style="width:100%">
+                <thead>
+                    <tr>
+                        <th>jour depot </th>
+                        <th>heure depot</th>
+                        <th>montant du depot</th>
+                        <th>solde avant depot</th>
+                        <th>solde apres depot</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for depot in liste_details_depot %}
+                    <tr>
+                        <td>{{ depot.jour }}</td>
+                        <td>{{ depot.heure }}</td>
+                        <td>{{ depot.montant }}</td>
+                        <td>{{ depot.solde_avant }}</td>
+                        <td>{{ depot.solde_apres }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h1>Historique des achats</h1>
+    {% for vente in liste_details_vente %}
+    <div class="row">
+        <h3>{{vente.jour}} {{vente.heure}}</h3>
+        <div class="col-12 table-responsive" style="max-height: 500px;">
+            <table id="table2" class="table table-striped table-bordered " style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Article</th>
+                        <th>Prix</th>
+                        <th>Quantité</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for article in vente.articles %}
+                    <tr>
+                        <td>{{ article.nom_article }}</td>
+                        <td>{{ article.prix }}</td>
+                        <td>{{ article.quantite }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="row" style="margin-bottom: 5%;">
+        <div class="col-12">
+            <div class="row" style="margin-top: 15px;">
+                <div class="col-12">
+                    <div style="font-weight:bold">MONTANT VENTE : <span id="montant_vente">{{vente.montant_vente}}</span> FCFA
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div style="font-weight:bold">SOLDE CLIENT AVANT VENTE : <span id="somme_encaissement">{{vente.solde_avant}}</span>
+                        FCFA</div>
+                </div>
+                <div class="col-12">
+                    <div style="font-weight:bold">SOLDE CLIENT APRES VENTE: <span id="monnaie_rendue">{{vente.solde_apres}}</span> FCFA
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div style="font-weight:bold">VENDEUR : <span id="vendeur">{{vente.vendeur}}</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

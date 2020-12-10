@@ -1,0 +1,66 @@
+{% extends "pos/base.html" %}
+
+{% block title %}Nouveau client{% endblock %}
+
+{% block style %}
+<style>
+    
+</style>
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function() {
+
+        $("#enregister").on('click', function (e) {
+            e.preventDefault();
+            $.ajax({
+                type: 'POST',
+                url: "{% url 'pos:nouveau_client' %}",
+                data: {
+                    csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+                    nom_client: $('#nom_client').val(),
+                    prenoms_client: $('#prenoms_client').val(),
+                    numero_cnib_client: $('#numero_cnib_client').val()
+                },
+                success: function (response) {
+                    swal("Opération réussie!", "Entrée enregistrée!", "success").then(res => {
+                        location.replace("/pos/lst/client/");
+                    });
+                },
+                error: function (response) {
+                    swal("Erreur!", "Une erreur s'est produite. Contactez le +22665136188 si l'erreur persiste!", "error");
+                }
+            });
+        });
+
+    });
+</script>
+{% endblock %}
+
+{% block main %}
+<div class="container-fluid" style="margin-top: 50px; margin-bottom: 100px;">
+    
+    <div class="row col-12">
+        <form style="width: 100%;">
+            
+            <div class="form-group">
+                <label for="nom_client">Nom</label>
+                <input type="text" class="form-control" id="nom_client" name="nom_client">
+            </div>
+
+            <div class="form-group">
+                <label for="prenoms_client">Prénoms</label>
+                <input type="text" class="form-control" id="prenoms_client" name="prenoms_client">
+            </div>
+
+            <div class="form-group">
+                <label for="numero_cnib_client">Numero CNIB</label>
+                <input type="text" class="form-control" id="numero_cnib_client" name="numero_cnib_client">
+            </div>
+
+            <button type="submit" id="enregister" class="btn btn-primary mb-2 float-right">Enregistrer</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
