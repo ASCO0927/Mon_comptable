@@ -29,7 +29,8 @@
                 },
                 success: function (response) {
                     swal("Opération réussie!", "Entrée enregistrée!", "success").then(res => {
-                        location.replace("/pos/" + "{{user.id}}" + "/controle/entrees/");
+                        //location.replace("/pos/" + "{{user.id}}" + "/controle/entrees/");
+                        window.location = document.referrer;
                     });
                 },
                 error: function (response) {
@@ -40,17 +41,19 @@
 
         $("#annuler").on('click', function (e) {
             e.preventDefault();
-            location.replace("/pos/" + "{{user.id}}" + "/controle/entrees/");
+            //location.replace("/pos/" + "{{user.id}}" + "/controle/entrees/");
+            window.location = document.referrer;
         });
 
         $("#supprimer").on('click', function (e) {
             e.preventDefault();
             $.ajax({
                 type: 'GET',
-                url: "{% url 'pos:sup_article' user.id entree.id %}",
+                url: "{% url 'pos:sup_entree' user.id entree.id %}",
                 success: function (response) {
                     swal("Opération réussie!", "Article supprimé!", "success").then(res => {
-                        location.replace("/pos/" + "{{user.id}}" + "/controle/entrees/");
+                        //location.replace("/pos/" + "{{user.id}}" + "/controle/entrees/");
+                        window.location = document.referrer;
                     });
                 },
                 error: function (response) {

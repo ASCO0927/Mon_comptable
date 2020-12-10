@@ -60,6 +60,7 @@
                     $('#somme_encaissement').html('' + response.montant_encaisse);
                     $('#monnaie_rendue').html('' + response.monnaie_rendue);
                     $('#vendeur').html('' + response.vendeur);
+                    $('#client').html('' + response.client);
                 },
                 error: function (response) {
                     alert('ooooooooooooooooo');
@@ -137,6 +138,9 @@
                         </div>
                         <div class="col-12">
                             <div style="font-weight:bold">VENDEUR : <span id="vendeur"></span></div>
+                        </div>
+                        <div class="col-12">
+                            <div style="font-weight:bold">CLIENT : <span id="client"></span></div>
                         </div>
                     </div>
                 </div>

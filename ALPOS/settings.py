@@ -10,6 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
+use_sqlite_db = False
+
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -25,8 +27,8 @@ SECRET_KEY = '&+$j3r8w#bb3x=qpd#m*2=!%=lihr=d=e8_h%ny&gl%_h#r^71'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.43.54']
-
+#ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.43.88']
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -75,15 +77,23 @@ WSGI_APPLICATION = 'ALPOS.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'django3tutorial',
-        'USER': 'root',
-        'PASSWORD': 'azerty',
-        'HOST': 'localhost',
+if not use_sqlite_db:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'django3tutorial',
+            'USER': 'root',
+            'PASSWORD': 'azerty',
+            'HOST': 'localhost',
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
+    }
 
 
 # Password validation

@@ -3,17 +3,60 @@ from django.contrib.auth.models import User
 
 
 
+#classes du client
+class Client(models.Model):
+    nom = models.CharField(max_length=200)
+    prenoms = models.CharField(max_length=200)
+    numero_cnib = models.CharField(max_length=200)
+    solde = models.IntegerField(default=0)
+
+    def __str__(self):
+        return "{} {}, cnib: {}, solde: {}".format(self.nom, self.prenoms, self.numero_cnib, self.solde)
+
+class Depot(models.Model):
+    client = models.ForeignKey(Client, on_delete=models.CASCADE)
+    montant = models.IntegerField(default=0)
+    date_depot = models.DateTimeField(blank=True, null=True)
+
+    def __str__(self):
+        return str(self.montant)
+
+
 class Vente(models.Model):
     vendeur = models.ForeignKey(User, on_delete=models.CASCADE)
-    date_vente = models.DateTimeField('date operation')
+    date_vente = models.DateTimeField('date vente')
     montant_encaisse = models.IntegerField(default=0)
     monnaie_rendue = models.IntegerField(default=0)
+
+    client = models.ForeignKey(Client, blank=True, null=True, on_delete=models.CASCADE)
 
     def __str__(self):
         return str(self.id)
 
 
+class HistoriqueTransactionsClient(models.Model):
+    client = models.ForeignKey(Client, on_delete=models.CASCADE)
+    montant = models.IntegerField(default=0)
+    type_transaction = models.CharField(max_length=200) #liquide, compte
+    vente = models.ForeignKey(Vente, blank=True, null=True, on_delete=models.CASCADE)
+    depot = models.ForeignKey(Depot, blank=True, null=True, on_delete=models.CASCADE)
+    solde_avant = models.IntegerField(default=0)
+    solde_apres = models.IntegerField(default=0)
+    date_transaction = models.DateTimeField('date transaction')
+
+
+    def __str__(self):
+        return str(self.montant)
+
+
 #classes de la caisse
+class Caisse(models.Model):
+    montant = models.IntegerField(default=0)
+
+    def __str__(self):
+        return str(self.id)
+
+
 class OperationsCaisse(models.Model):
     choix_operation = models.TextChoices('choix_operation', 'encaissement decaissement')
     choix_motif = models.TextChoices('choix_motif', 'vente depot_petite_monnaie ramassage')
@@ -27,7 +70,7 @@ class OperationsCaisse(models.Model):
     def __str__(self):
         return str(self.id)
 
- 
+
 class Coupures(models.Model):
     operation_caisse = models.ForeignKey(OperationsCaisse, on_delete=models.CASCADE)
     coupure = models.IntegerField(default=0) #ex: 1000fcfa, 1000fcfa
@@ -98,44 +141,4 @@ class ArretOperation(models.Model):
     def __str__(self):
         return str(self.date_arret)
 
-'''
-class EncaissementVente(models.Model):
-    numero_vente = models.ForeignKey(Vente, on_delete=models.CASCADE)
-    billet_ou_piece_de = models.IntegerField(default=0) #ex: 1000fcfa, 1000fcfa
-    nbr_billet_ou_piece_de = models.IntegerField(default=0)
 
-    def __str__(self):
-        return self.billet_ou_piece_de
-
-
-class DecaissementVente(models.Model):#monnaie rendue a la caisse suite a un achat
-    numero_vente = models.ForeignKey(Vente, on_delete=models.CASCADE)
-    billet_ou_piece_de = models.IntegerField(default=0) #ex: 1000fcfa, 1000fcfa
-    nbr_billet_ou_piece_de = models.IntegerField(default=0)
-
-    def __str__(self):
-        return self.billet_ou_piece_de
-
-
-class EncaissementAutre(models.Model):
-    date_encaissement = models.DateTimeField('date du depot')
-    billet_ou_piece_de = models.IntegerField(default=0) #ex: 1000fcfa, 1000fcfa
-    nbr_billet_ou_piece_de = models.IntegerField(default=0)
-    effectue_par = models.ForeignKey(User, on_delete=models.CASCADE)
-    motif = models.CharField(max_length=200)
-
-    def __str__(self):
-        return self.billet_ou_piece_de
-
-
-class DecaissementAutre(models.Model):
-    date_decaissement = models.DateTimeField('date du depot')
-    billet_ou_piece_de = models.IntegerField(default=0) #ex: 1000fcfa, 1000fcfa
-    nbr_billet_ou_piece_de = models.IntegerField(default=0)
-    effectue_par = models.ForeignKey(User, on_delete=models.CASCADE)
-    motif = models.CharField(max_length=200)
-
-    def __str__(self):
-        return self.billet_ou_piece_de        
-
-'''

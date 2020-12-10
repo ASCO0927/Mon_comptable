@@ -5,214 +5,20 @@
 {% block script %}
 <script>
     let caisse;
-    let impossible_de_rendre_la_monnnaie = true;
-    var detail_encaissement = [
-        {
-            coupure: 5,
-            qte: 0
-        },
-        {
-            coupure: 10,
-            qte: 0,
-        },
-        {
-            coupure: 25,
-            qte: 0,
-        },
-        {
-            coupure: 50,
-            qte: 0,
-        },
-        {
-            coupure: 100,
-            qte: 0,
-        },
-        {
-            coupure: 200,
-            qte: 0,
-        },
-        {
-            coupure: 250,
-            qte: 0,
-        },
-        {
-            coupure: 500,
-            qte: 0,
-        },
-        {
-            coupure: 1000,
-            qte: 0,
-        },
-        {
-            coupure: 2000,
-            qte: 0,
-        },
-        {
-            coupure: 5000,
-            qte: 0,
-        },
-        {
-            coupure: 10000,
-            qte: 0,
-        },
-    ];
-    
-    function reinitialiser_tableau_especes() {
-        for (let index = 0; index < detail_encaissement.length; index++) {
-            detail_encaissement[index].qte = 0;
-
-            $('#' + detail_encaissement[index].coupure + '_qte').html(0);
-        }
-    }
-
-    function detail_monnaie_a_rendre() {
-        _monnaie_a_rendre = monnaie_a_rendre();
-        let _detail_monnaie_a_rendre = [];
-
-
-        if (_monnaie_a_rendre > 0) {
-            let caisse_tmp = caisse;
-            
-            for (let index = 0; index < caisse_tmp.length; index++) {
-                const element = caisse_tmp[index];
-                if (!_monnaie_a_rendre) {
-                        break;
-                    }
-                if ((_monnaie_a_rendre >= element.coupure) && element.qte) {
-                    if ((_monnaie_a_rendre % element.coupure) == 0) {
-                        if (Math.floor(_monnaie_a_rendre / element.coupure) <= element.qte) {
-                            _detail_monnaie_a_rendre.push(
-                                {
-                                    coupure: element.coupure,
-                                    qte: Math.floor(_monnaie_a_rendre / element.coupure)
-                                }
-                            );
-                            _monnaie_a_rendre -= element.coupure * Math.floor(_monnaie_a_rendre / element.coupure);
-                            break;
-                        } else {
-                            _detail_monnaie_a_rendre.push(
-                                {
-                                    coupure: element.coupure,
-                                    qte: element.qte
-                                }
-                            );
-                            _monnaie_a_rendre -= element.coupure * element.qte;
-                        }
-                    } else {
-                        if (Math.floor(_monnaie_a_rendre / element.coupure) <= element.qte) {
-                            _detail_monnaie_a_rendre.push(
-                                {
-                                    coupure: element.coupure,
-                                    qte: Math.floor(_monnaie_a_rendre / element.coupure)
-                                }
-                            );
-                            _monnaie_a_rendre -= element.coupure * Math.floor(_monnaie_a_rendre / element.coupure);
-                        } else {
-                            _detail_monnaie_a_rendre.push(
-                                {
-                                    coupure: element.coupure,
-                                    qte: element.qte
-                                }
-                            );
-                            _monnaie_a_rendre -= element.coupure * element.qte;
-                        }
-                    }
-                }
-            }
-
-            if (_monnaie_a_rendre > 0) {
-            //    console.log('Impossible de rendre la monnaie');
-                return -1;
-            } else {
-            //    console.log(_detail_monnaie_a_rendre);
-                return _detail_monnaie_a_rendre;
-            }
-        } else if(_monnaie_a_rendre == 0){
-            console.log('Aucune monnaie a rendre');
-            _detail_monnaie_a_rendre = [];
-            return _detail_monnaie_a_rendre;
-        } else {
-            return -1;
-        }
-    }
-
-    
-    function mod_detail_encaissement(coupure, aug){
-        mtt_encaissement = 0;
-
-        id = coupure+'_qte';
-        qte = Number($('#'+id).html());
-        if(aug && montant_panier()){
-            n_qte = qte + 1;
-            for (let index = 0; index < detail_encaissement.length; index++) {
-                const element = detail_encaissement[index];
-                if(element.coupure == coupure){
-                    detail_encaissement[index].qte++;
-                }
-
-                mtt_encaissement = mtt_encaissement + detail_encaissement[index].qte * detail_encaissement[index].coupure;
-            }
-            $('#'+id).html(n_qte);
-            $('#encaissement_input_id').val(mtt_encaissement);
-            
-        } else {
-            if(qte > 0){
-                n_qte = qte - 1;
-                for (let index = 0; index < detail_encaissement.length; index++) {
-                    const element = detail_encaissement[index];
-                    if (element.coupure == coupure) {
-                        detail_encaissement[index].qte--;
-                    }
-
-                    mtt_encaissement = mtt_encaissement + detail_encaissement[index].qte * detail_encaissement[index].coupure;
-                }
-                $('#' + id).html(n_qte);
-                $('#encaissement_input_id').val(mtt_encaissement);
-            }
-        }
-
-        update_table_detail_monnaie();
-        update_montant();
-    }
 
     function update_montant_caisse() {
-        montant_caisse = 0;
-        caisse.forEach(element => {
-            montant_caisse += Number(element.coupure) * Number(element.qte);
-        });
+        montant_caisse = caisse;
         
         $('#montant_caisse').html(montant_caisse);
     }
 
-    function update_table_detail_monnaie(){
-        $('#table_detail_monnaie').html('');
-        dtm = detail_monnaie_a_rendre();
-        if (dtm == -1) {
-            impossible_de_rendre_la_monnnaie = true;
-            $('#table_detail_monnaie').append('Impossible de rendre la monnaie');
-        } else if (dtm == 0){
-            impossible_de_rendre_la_monnnaie = false;
-            $('#table_detail_monnaie').append('Aucune monnaie a rendre');
-        } else {
-            impossible_de_rendre_la_monnnaie = false;
-            dtm.forEach(element => {
-                $('#table_detail_monnaie').append(`
-                    <tr>
-                        <td>
-                            <div class="btn-group mr-2" role="group" aria-label="First group">
-                                <button type="button" class="btn btn-success">`+element.coupure+` fcfa</button>
-                                <button type="button" class="btn btn-primary">X</button>
-                                <button type="button" class="btn btn-success">`+element.qte+`</button>
-                            </div>
-                        </td>
-                    </tr>
-                `);
-            });
-        }
-        //$('h2').append(' ***');
-    }
-
     $(document).ready(function () {
+        $('#select_client_id').select2({
+            placeholder: "Choisir un client",
+            allowClear: true,
+            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
+        });
+
         $.ajax({
             type: 'GET',
             url: "{% url 'pos:vente' user.id %}",
@@ -266,11 +72,6 @@
             montant = montant_panier();
             let monnaie = monnaie_a_rendre();
 
-            if ((montant > 0) && (monnaie >= 0) && (!impossible_de_rendre_la_monnnaie)) {
-                $('#bouton_vendre').prop('disabled', false);
-            } else {
-                $('#bouton_vendre').prop('disabled', true);
-            }
             console.log(montant);
             $('#montant_total').html(`<div id="montant_total" class="row" style="margin-top: 15px; margin-left: 10px;">TOTAL : ` + montant + ` FCFA </div>`);
 
@@ -284,33 +85,25 @@
             let montant = montant_panier();
             let monnaie = monnaie_a_rendre();
 
-            if ((montant > 0) && (monnaie >= 0) && (!impossible_de_rendre_la_monnnaie)) {
-                $('#bouton_vendre').prop('disabled', false);
-            } else {
-                $('#bouton_vendre').prop('disabled', true);
-            }
-
             if (monnaie < 0) {
                 monnaie = 0
             }
 
             $('#monnaie_id').replaceWith(`<input type="text" style="font-weight:bold" readonly class="form-control-plaintext" id="monnaie_id" value="MONNAIE: ` + monnaie + ` FCFA">`);
             
-            update_table_detail_monnaie();
         }
 
         $('#reinitialiser-button').on('click', function (e) {
             e.preventDefault();
-            reinitialiser_tableau_especes();
             
             $('#monnaie_id').replaceWith(`<input type="text" style="font-weight:bold" readonly class="form-control-plaintext" id="monnaie_id" value="MONNAIE: ` + 0 + ` FCFA">`);
             $('#encaissement_input_id').val(0);
 
-            update_table_detail_monnaie();
         });
 
         $('#bouton_vendre').on('click', function (e) {
             e.preventDefault();
+            
             liste_articles_a_vendre = new Object();
 
             table_panier.rows().every(function () {
@@ -325,24 +118,31 @@
                 data: {
                     csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
                     liste_articles_a_vendre: JSON.stringify(liste_articles_a_vendre),
-                    montant_encaisse: Number($('#encaissement_input_id').val()),
-                    monnaie_rendue: monnaie_a_rendre(),
-                    detail_encaissement: JSON.stringify(detail_encaissement),
-                    detail_monnaie_a_rendre: JSON.stringify(detail_monnaie_a_rendre())
+                    client_id: $('#select_client_id').val(),
+                    mode_paiement: $('#select_modepaiement_id').val()
                 },
                 success: function (response) {
                     swal("Opération réussie!", "Vente enregistrée!", "success");
                     caisse = response.caisse;
                     console.log(caisse);
 
+                    //printJS({ printable: 'panier', type: 'html', css: ['/static/pos/bootstrap-4.0.0-dist/css/bootstrap.min.css'] })
+            
+                    
                     update_montant_caisse();
                     table_panier.clear().draw();
                     $('#monnaie_id').replaceWith(`<input type="text" style="font-weight:bold" readonly class="form-control-plaintext" id="monnaie_id" value="MONNAIE: ` + 0 + ` FCFA">`);
                     $('#encaissement_input_id').val(0);
                     update_montant();
 
-                    reinitialiser_tableau_especes();
-                    update_table_detail_monnaie();
+                    $('#select_client_id').val('');
+                    $('#select_modepaiement_id').val('liquide');
+                    $('#select_client_id').select2({
+                        placeholder: "Choisir un client",
+                        allowClear: true,
+                        sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
+                    });
+
                 },
                 error: function (response) {
                     swal("Erreur!", "Une erreur s'est produite. Contactez le +22665136188 si l'erreur persiste!", "error");
@@ -531,14 +331,38 @@
                 </div>
             </div>
 
+            <!--CLIENT-->
+            <div class="row">
+                <div class="col-8">
+                    <div class="form-group">
+                        <label for="select_client_id">Choisir un client</label>
+                        <select class="js-states form-control" id="select_client_id" name="client">
+                            {% for client in liste_clients %}
+                            <option value="{{client.id}}">{{client}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="form-group">
+                        <label for="select_modepaiement_id">Mode de paiement</label>
+                        <select class="js-states form-control" id="select_modepaiement_id" name="modepaient">
+                            <option value="liquide" selected>liquide</option>
+                            <option value="compte">compte</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <!--FIN CLIENT-->
+
             <div class="row">
                 <div class="col-12">
                     <div class="row" style="margin-top: 10px;">
                         <div class="col-8">
                             <form class="form-inline">
                                 <div class="form-group mx-sm-3 mb-2">
-                                    <input type="number" class="form-control" id="encaissement_input_id" readonly
-                                        placeholder="Encaissement" value="0">
+                                    <label>Espèces</label> 
+                                    <input type="number" class="form-control" id="encaissement_input_id" min="0" >
                                 </div>
                                 
                                 <div class="form-group mb-2">
@@ -560,97 +384,6 @@
                 </div>
             </div>
 
-            <div class="row">
-                <div class="col-8">
-                    <table id="" class="table table-striped table-bordered ">
-                        <tr>
-                            <td>5 X <span id="5_qte">0</span>
-                                <div class="btn-group mr-2 float-right" role="group" aria-label="First group">
-                                    <button onclick="mod_detail_encaissement(5, true)" type="button" class="btn btn-primary">+</button>
-                                    <button onclick="mod_detail_encaissement(5, false)" type="button" class="btn btn-primary">-</button>
-                                </div>
-                            </td>
-                            <td>10 X <span id="10_qte">0</span>
-                                <div class="btn-group mr-2 float-right" role="group" aria-label="First group">
-                                    <button onclick="mod_detail_encaissement(10, true)" type="button" class="btn btn-primary">+</button>
-                                    <button onclick="mod_detail_encaissement(10, false)" type="button" class="btn btn-primary">-</button>
-                                </div>
-                            </td>
-                            <td>25 X <span id="25_qte">0</span>
-                                <div class="btn-group mr-2 float-right" role="group" aria-label="First group">
-                                    <button onclick="mod_detail_encaissement(25, true)" type="button" class="btn btn-primary">+</button>
-                                    <button onclick="mod_detail_encaissement(25, false)" type="button" class="btn btn-primary">-</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>50 X <span id="50_qte">0</span>
-                                <div class="btn-group mr-2 float-right" role="group" aria-label="First group">
-                                    <button onclick="mod_detail_encaissement(50, true)" type="button" class="btn btn-primary">+</button>
-                                    <button onclick="mod_detail_encaissement(50, false)" type="button" class="btn btn-primary">-</button>
-                                </div>
-                            </td>
-                            <td>100 X <span id="100_qte">0</span>
-                                <div class="btn-group mr-2 float-right" role="group" aria-label="First group">
-                                    <button onclick="mod_detail_encaissement(100, true)" type="button" class="btn btn-primary">+</button>
-                                    <button onclick="mod_detail_encaissement(100, false)" type="button" class="btn btn-primary">-</button>
-                                </div>
-                            </td>
-                            <td>200 X <span id="200_qte">0</span>
-                                <div class="btn-group mr-2 float-right" role="group" aria-label="First group">
-                                    <button onclick="mod_detail_encaissement(200, true)" type="button" class="btn btn-primary">+</button>
-                                    <button onclick="mod_detail_encaissement(200, false)" type="button" class="btn btn-primary">-</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>500 X <span id="500_qte">0</span>
-                                <div class="btn-group mr-2 float-right" role="group" aria-label="First group">
-                                    <button onclick="mod_detail_encaissement(500, true)" type="button" class="btn btn-primary">+</button>
-                                    <button onclick="mod_detail_encaissement(500, false)" type="button" class="btn btn-primary">-</button>
-                                </div>
-                            </td>
-                            <td>1000 X <span id="1000_qte">0</span>
-                                <div class="btn-group mr-2 float-right" role="group" aria-label="First group">
-                                    <button onclick="mod_detail_encaissement(1000, true)" type="button" class="btn btn-primary">+</button>
-                                    <button onclick="mod_detail_encaissement(1000, false)" type="button" class="btn btn-primary">-</button>
-                                </div>
-                            </td>
-                            <td>250 X <span id="250_qte">0</span>
-                                <div class="btn-group mr-2 float-right" role="group" aria-label="First group">
-                                    <button onclick="mod_detail_encaissement(250, true)" type="button" class="btn btn-primary">+</button>
-                                    <button onclick="mod_detail_encaissement(250, false)" type="button" class="btn btn-primary">-</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>5000 X <span id="5000_qte">0</span>
-                                <div class="btn-group mr-2 float-right" role="group" aria-label="First group">
-                                    <button onclick="mod_detail_encaissement(5000, true)" type="button" class="btn btn-primary">+</button>
-                                    <button onclick="mod_detail_encaissement(5000, false)" type="button" class="btn btn-primary">-</button>
-                                </div>
-                            </td>
-                            <td>10000 X <span id="10000_qte">0</span>
-                                <div class="btn-group mr-2 float-right" role="group" aria-label="First group">
-                                    <button onclick="mod_detail_encaissement(10000, true)" type="button" class="btn btn-primary">+</button>
-                                    <button onclick="mod_detail_encaissement(10000, false)" type="button" class="btn btn-primary">-</button>
-                                </div>
-                            </td>
-                            <td>2000 X <span id="2000_qte">0</span>
-                                <div class="btn-group mr-2 float-right" role="group" aria-label="First group">
-                                    <button onclick="mod_detail_encaissement(2000, true)" type="button" class="btn btn-primary">+</button>
-                                    <button onclick="mod_detail_encaissement(2000, false)" type="button" class="btn btn-primary">-</button>
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-                <div class="col-4">
-                    <table id="table_detail_monnaie">
-                        
-                    </table>
-                </div>
-            </div>
         </div>
     </div>
 </div>

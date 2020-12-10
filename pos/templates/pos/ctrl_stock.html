@@ -34,15 +34,25 @@
                 <tbody>
                     {% for article in liste_articles_en_catalogue %}
                     <tr>
-                        <td>{{ article.categorie }}</td>
-                        <td>{{ article.nom_article }}</td>
-                        <td>{{ article.PAU }}</td>
-                        <td>{{ article.PVU }}</td>
-                        <td>{{ article.en_stock }}</td>
+                        <td><a href="{% url 'pos:mod_categorie' user.id article.categorie.id %}">{{ article.categorie }}</a></td>
+                        <td><a href="{% url 'pos:mod_article' user.id article.id %}">{{ article.nom_article }}</a></td>
+                        <td><a href="{% url 'pos:mod_article' user.id article.id %}">{{ article.PAU }}</a></td>
+                        <td><a href="{% url 'pos:mod_article' user.id article.id %}">{{ article.PVU }}</a></td>
+                        <td><a href="{% url 'pos:mod_entree' user.id article.id_derniere_entree %}">{{ article.en_stock }}</a></td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+    </div>
+    <div class="row" style="margin-bottom: 1%; margin-top: 2%;">
+        <div class="col-12">
+            <a class="btn btn-primary float-right" href="#">Valeur totale du stock à l'achat : {{ val_stock_achat }} FCFA</a>
+        </div>
+    </div>
+    <div class="row" style="margin-bottom: 1%;">
+        <div class="col-12">
+            <a class="btn btn-primary float-right" href="#">Valeur totale du stock à la vente : {{ val_stock_vente }} FCFA</a>
         </div>
     </div>
 </div>

@@ -3,11 +3,12 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
 import json
-from .models import Article, Vente, Sortie, Avarie, Entree, Controle, Categorie, Coupures, OperationsCaisse
+from .models import HistoriqueTransactionsClient, Client, Depot, Article, Vente, Sortie, Avarie, Entree, Controle, Categorie, Coupures, OperationsCaisse, Caisse
 from django.utils import timezone
 from django.contrib.auth.models import Permission, User
 from django.core import serializers
 from datetime import datetime
+
 
 
 def login_view(request):
@@ -57,59 +58,217 @@ def le_point(request, user_id):
                         art_vendus[j]['quantite'] = art_vendus[j]['quantite'] + sortie.quantite
                         unique = False
                 if unique:
-                    art_vendus.append({'categorie': sortie.article.categorie.nom_categorie, 'nom_article': sortie.article.nom_article, 'prix': sortie.article.PVU, 'quantite': sortie.quantite})
-                        
+                    art_vendus.append({'categorie': sortie.article.categorie.nom_categorie, 'nom_article': sortie.article.nom_article, 'prix': sortie.article.PVU, 'quantite': sortie.quantite, 'benefice': sortie.quantite * (int(sortie.article.PVU) - int(sortie.article.PAU)) })
+            
+            benefice_periode = 0
+            for vente in art_vendus:
+                benefice_periode += vente['benefice']
 
-            return JsonResponse({'date_debut': controle.date_debut, 'date_fin': controle.date_fin, 'art_vendus': art_vendus}, status=200)
+            return JsonResponse({'date_debut': controle.date_debut, 'date_fin': controle.date_fin, 'art_vendus': art_vendus, 'benefice_periode': benefice_periode}, status=200)
 
 
-def collecte_caisse(request, user_id):
-    if not request.user.is_authenticated:
+################CLIENT#########################
+
+def list_clients(request):
+    if not request.user.is_superuser:
+        logout(request)
         return HttpResponseRedirect(reverse('pos:login'))
     else:
-        if request.method == 'POST':
-            detail_encaissement = request.POST['detail_encaissement']
-            now = timezone.now()
-            
-            operation_caisse = OperationsCaisse(type_operation='decaissement', motif='ramassage', date_operation=now)
-            operation_caisse.save()
-            for det_enc in json.loads(detail_encaissement):
-                if(det_enc['qte']):
-                    ncoupure = Coupures(operation_caisse=operation_caisse, coupure=det_enc['coupure'], qte=det_enc['qte'])
-                    ncoupure.save()
-            
-            return JsonResponse({'message': 'operation enregistrée avec succes', 'caisse': Caisse()}, status=200)
+        if request.method == 'GET':
+            liste_clients = Client.objects.all()
+            return render(request, 'pos/client/liste_clients.html', {'liste_clients': liste_clients})
+
+
+def nouveau_client(request):
+    if not request.user.is_superuser:
+        logout(request)
+        return HttpResponseRedirect(reverse('pos:login'))
+    else:
+        if request.method == 'GET':
+            return render(request, 'pos/client/nouveau_client.html')
         else:
             if request.is_ajax():
-                return JsonResponse({'message': 'operation enregistrée avec succes', 'caisse': Caisse()}, status=200)
+                client = Client(nom=request.POST['nom_client'], prenoms=request.POST['prenoms_client'], numero_cnib=request.POST['numero_cnib_client'])
+                client.save()
+                
+                return JsonResponse({'message': 'operation enregistrée avec succes'}, status=200)
+
+def lst_transactions_client(request, client_id):
+    if not request.user.is_superuser:
+        logout(request)
+        return HttpResponseRedirect(reverse('pos:login'))
+    else:
+        if request.method == 'GET':
+            client=Client.objects.get(pk = client_id)
+            liste_depots_client = Depot.objects.filter(client = client)
+            liste_transactions_client = HistoriqueTransactionsClient.objects.filter(client = client)
+
+            liste_ventes_au_client = Vente.objects.filter(client = client)
+
+            liste_details_vente = []
+
+            for vente in liste_ventes_au_client:
+                liste_articles_vente = []
+                montant_vente = 0
+                sorties = Sortie.objects.filter(numero_vente=vente.id)
+                for sortie in sorties:
+                    liste_articles_vente.append({'nom_article': sortie.article.nom_article, 'prix': sortie.article.PVU, 'quantite': sortie.quantite})
+                    montant_vente = montant_vente + sortie.article.PVU * sortie.quantite
+                hist_trans = HistoriqueTransactionsClient.objects.get(vente = vente)
+                solde_avant = hist_trans.solde_avant
+                solde_apres = hist_trans.solde_apres
+                liste_details_vente.append(
+                    {
+                        'id': vente.id, 
+                        'vendeur': vente.vendeur.username, 
+                        'jour': vente.date_vente.strftime("%d/%m/%Y"), 
+                        'heure': vente.date_vente.strftime("%H:%M"), 
+                        'solde_avant': solde_avant , 
+                        'solde_apres': solde_apres, 
+                        'articles':liste_articles_vente, 
+                        'montant_vente': montant_vente
+                    }
+                )
+
+            liste_details_depot = []
+            for depot in liste_depots_client:
+                hist_trans = HistoriqueTransactionsClient.objects.get(depot = depot)
+                solde_avant = hist_trans.solde_avant
+                solde_apres = hist_trans.solde_apres
+                liste_details_depot.append(
+                    {
+                        'id': depot.id,  
+                        'jour': depot.date_depot.strftime("%d/%m/%Y"), 
+                        'heure': depot.date_depot.strftime("%H:%M"), 
+                        'solde_avant': solde_avant , 
+                        'solde_apres': solde_apres, 
+                        'montant': depot.montant,
+                    }
+                )
+
+
+            return render(request, 'pos/transactions/liste_transactions.html', {'liste_details_depot': liste_details_depot, 'liste_details_vente': liste_details_vente})
+
+def mod_client(request, client_id, *args, **kwargs):
+    if not request.user.is_superuser:
+        logout(request)
+        return HttpResponseRedirect(reverse('pos:login'))
+    else:
+        if request.method == 'GET':
+            client=Client.objects.get(pk = client_id)
+            return render(request, 'pos/client/modifier_client.html', {'client': client})
+        else:
+            if request.is_ajax():
+                client=Client.objects.get(pk = client_id)
+                
+                client.nom = request.POST['nom_client']
+                client.prenoms = request.POST['prenoms_client']
+                client.numero_cnib = request.POST['numero_cnib_client']
+                client.save()
+                                
+                return JsonResponse({'message': 'operation enregistrée avec succes'}, status=200)
+
+
+def sup_client(request, client_id):
+    if not request.user.is_superuser:
+        logout(request)
+        return HttpResponseRedirect(reverse('pos:login'))
+    else:
+        if request.is_ajax() and request.method == 'GET':
+            client=Client.objects.get(pk = client_id)
+            client.delete()
+            return JsonResponse({'message': 'operation enregistrée avec succes'}, status=200)
+
+
+def depot_client(request, client_id):
+    if not request.user.is_superuser:
+        logout(request)
+        return HttpResponseRedirect(reverse('pos:login'))
+    else:
+        if request.method == 'GET':
+            client=Client.objects.get(pk = client_id)
+            return render(request, 'pos/client/depot_client.html', {"client": client})
+        else:
+            if request.is_ajax() and request.method == 'POST':
+                
+                montant_depot = int(request.POST['montant'])
+
+                depot = Depot(client=Client.objects.get(pk = request.POST['client_id']), montant=montant_depot, date_depot=timezone.now())
+                depot.save()
+
+                #maj solde
+                client=Client.objects.get(pk = client_id)
+                solde_avant = int(client.solde)
+                solde_apres = solde_avant + montant_depot
+                client.solde = solde_apres
+                client.save()
+
+                #hist transact
+                hist_transac = HistoriqueTransactionsClient(client=client, montant = montant_depot, type_transaction="depot", depot=depot, solde_avant=solde_avant, solde_apres=solde_apres, date_transaction=datetime.now())
+                hist_transac.save()
+
+                caisse_list = Caisse.objects.all()
+                if len(caisse_list) == 0:
+                    caisse = Caisse(montant=0)
+                else:
+                    caisse = caisse_list[0]
+                caisse.montant += montant_depot
+                caisse.save()
+
+                return JsonResponse({'message': 'operation enregistrée avec succes'}, status=200)
+###################FIN CLIENT####################
+
+def collecte_caisse(request, user_id):
+    if not request.user.is_superuser:
+        logout(request)
+        return HttpResponseRedirect(reverse('pos:login'))
+    else:
+        caisse_list = Caisse.objects.all()
+        if len(caisse_list) == 0:
+            caisse = Caisse(montant=0)
+        else:
+            caisse = caisse_list[0]
+
+        if request.method == 'POST':
+            montant_decaissement = request.POST['montant_decaissement']
+            now = timezone.now()
+            
+            caisse.montant -= int(montant_decaissement)
+            caisse.save()
+            
+            return JsonResponse({'message': 'operation enregistrée avec succes', 'caisse': caisse.montant}, status=200)
+        else:
+            if request.is_ajax():
+                return JsonResponse({'message': 'operation enregistrée avec succes', 'caisse': caisse.montant}, status=200)
             else:
                 return render(request, 'pos/collecte_caisse.html')
 
 
-
-
 def depot_petite_monnaie(request, user_id):
-    if not request.user.is_authenticated:
+    if not request.user.is_superuser:
+        logout(request)
         return HttpResponseRedirect(reverse('pos:login'))
     else:
+        caisse_list = Caisse.objects.all()
+        if len(caisse_list) == 0:
+            caisse = Caisse(montant=0)
+        else:
+            caisse = caisse_list[0]
+
         if request.method == 'POST':
-            detail_encaissement = request.POST['detail_encaissement']
+            montant_encaissement = request.POST['montant_encaissement']
             now = timezone.now()
             
-            operation_caisse = OperationsCaisse(type_operation='encaissement', motif='depot_petite_monnaie', date_operation=now)
-            operation_caisse.save()
-            for det_enc in json.loads(detail_encaissement):
-                if(det_enc['qte']):
-                    ncoupure = Coupures(operation_caisse=operation_caisse, coupure=det_enc['coupure'], qte=det_enc['qte'])
-                    ncoupure.save()
+            caisse.montant += int(montant_encaissement)
+            caisse.save()
+
             
-            return JsonResponse({'message': 'operation enregistrée avec succes', 'caisse': Caisse()}, status=200)
+            return JsonResponse({'message': 'operation enregistrée avec succes', 'caisse': caisse.montant}, status=200)
         else:
             if request.is_ajax():
-                return JsonResponse({'message': 'operation enregistrée avec succes', 'caisse': Caisse()}, status=200)
+                return JsonResponse({'message': 'operation enregistrée avec succes', 'caisse': caisse.montant}, status=200)
             else:
                 return render(request, 'pos/depot_petite_monnaie.html')
-
 
 
 def vente(request, user_id):
@@ -118,11 +277,16 @@ def vente(request, user_id):
     else:
         if request.method == 'POST':
             liste_articles_a_vendre = request.POST['liste_articles_a_vendre']
-            montant_encaisse = request.POST['montant_encaisse']
-            monnaie_rendue = request.POST['monnaie_rendue']
-            detail_encaissement = request.POST['detail_encaissement']
-            detail_monnaie_a_rendre = request.POST['detail_monnaie_a_rendre']
+            client = Client.objects.get(id=request.POST['client_id'])
+            mode_paiement = request.POST['mode_paiement']
             now = timezone.now()
+
+            caisse_list = Caisse.objects.all()
+            if len(caisse_list) == 0:
+                caisse = Caisse(montant=0)
+            else:
+                caisse = caisse_list[0]
+            
             
             for article in json.loads(liste_articles_a_vendre):
                 article_a_vendre = Article.objects.get(nom_article = article)
@@ -130,35 +294,59 @@ def vente(request, user_id):
                 if quantite_en_stock(article_a_vendre) < quantite:
                     return HttpResponse('la vente a echouee. Stock de {} insuffisant.'.format(article))
 
-            vente = Vente(vendeur=User.objects.get(id=user_id), date_vente=now, montant_encaisse=montant_encaisse, monnaie_rendue=monnaie_rendue)
+            vente = Vente(vendeur=User.objects.get(id=user_id), date_vente=now, client=client)
             vente.save()
 
+            montant_vente = 0
             for article in json.loads(liste_articles_a_vendre):
-                sortie = Sortie(article=Article.objects.get(nom_article = article), quantite=json.loads(liste_articles_a_vendre)[article], numero_vente=vente)
+                article_a_vendre = Article.objects.get(nom_article = article)
+                quantite_a_vendre = json.loads(liste_articles_a_vendre)[article]
+                prix_article = article_a_vendre.PVU
+
+                montant_vente += quantite_a_vendre * prix_article
+                #caisse.montant += quantite_a_vendre * prix_article
+
+                sortie = Sortie(article=article_a_vendre, quantite=quantite_a_vendre, numero_vente=vente)
                 sortie.save()
-            
-            operation_caisse = OperationsCaisse(type_operation='encaissement', motif='vente', numero_vente=vente, date_operation=now)
-            operation_caisse.save()
-            for det_enc in json.loads(detail_encaissement):
-                if(det_enc['qte']):
-                    ncoupure = Coupures(operation_caisse=operation_caisse, coupure=det_enc['coupure'], qte=det_enc['qte'])
-                    ncoupure.save()
-            
-            operation_caisse_d = OperationsCaisse(type_operation='decaissement', motif='vente', numero_vente=vente, date_operation=now)
-            operation_caisse_d.save()
-            for det_monnaie in json.loads(detail_monnaie_a_rendre):
-                if(det_monnaie['qte']):
-                    ncoupure = Coupures(operation_caisse=operation_caisse_d, coupure=det_monnaie['coupure'], qte=det_monnaie['qte'])
-                    ncoupure.save()
-            
-            return JsonResponse({'message': 'operation enregistrée avec succes', 'caisse': Caisse()}, status=200)
+
+            #maj solde
+            if mode_paiement == 'compte':
+                solde_avant = int(client.solde)
+                solde_apres = solde_avant - montant_vente
+                client.solde = solde_apres
+                client.save()
+            elif mode_paiement == 'liquide':
+                solde_avant = int(client.solde)
+                solde_apres = int(client.solde)
+
+                #maj caisse
+                caisse.montant += montant_vente
+                caisse.save()
+
+            else:
+                return HttpResponse('Echec de la transaction! le mode de paiment {} n est pas connu du systeme'.format(mode_paiement))
+
+            #hist transact
+            hist_transac = HistoriqueTransactionsClient(client=client, montant = montant_vente, type_transaction=mode_paiement, vente=vente, solde_avant=solde_avant, solde_apres=solde_apres, date_transaction=datetime.now())
+            hist_transac.save()
+
+            return JsonResponse({'message': 'operation enregistrée avec succes', 'caisse': caisse.montant}, status=200)
         else:
             if request.is_ajax():
-                return JsonResponse({'message': 'operation enregistrée avec succes', 'caisse': Caisse()}, status=200)
+                
+                caisse_list = Caisse.objects.all()
+                if len(caisse_list) == 0:
+                    caisse = Caisse(montant=0)
+                    caisse.save()
+                else:
+                    caisse = caisse_list[0]
+
+                return JsonResponse({'message': 'operation enregistrée avec succes', 'caisse': caisse.montant}, status=200)
             else:
                 liste_articles_en_catalogue = catalogue_et_stock()
+                liste_clients = Client.objects.all()
 
-                context = {'liste_articles_en_catalogue': liste_articles_en_catalogue}
+                context = {'liste_articles_en_catalogue': liste_articles_en_catalogue, 'liste_clients': liste_clients}
                 return render(request, 'pos/vente.html', context)
 
 
@@ -187,7 +375,19 @@ def ctrl_vente(request, user_id):
                     liste_articles_vente.append({'nom_article': sortie.article.nom_article, 'prix': sortie.article.PVU, 'quantite': sortie.quantite})
                     montant_vente = montant_vente + sortie.article.PVU * sortie.quantite
 
-                return JsonResponse({'id': request.POST['id'], 'vendeur': vente.vendeur.username, 'jour': vente.date_vente.strftime("%d/%m/%Y"), 'heure': vente.date_vente.strftime("%H:%M"), 'montant_encaisse': vente.montant_encaisse , 'monnaie_rendue': vente.monnaie_rendue, 'articles':liste_articles_vente, 'montant_vente': montant_vente}, status=200)
+                return JsonResponse(
+                    {
+                        'id': request.POST['id'], 
+                        'vendeur': vente.vendeur.username, 
+                        'jour': vente.date_vente.strftime("%d/%m/%Y"), 
+                        'heure': vente.date_vente.strftime("%H:%M"), 
+                        'montant_encaisse': vente.montant_encaisse , 
+                        'monnaie_rendue': vente.monnaie_rendue, 
+                        'articles':liste_articles_vente, 
+                        'montant_vente': montant_vente,
+                        'client': '{} {}'.format(vente.client.nom, vente.client.prenoms),
+                    }, 
+                status=200)
 
 
 def ctrl_stock(request, user_id):
@@ -196,8 +396,14 @@ def ctrl_stock(request, user_id):
     else:
         if request.method == 'GET':
             liste_articles_en_catalogue = catalogue_et_stock()
+            val_stock_achat = 0
+            val_stock_vente = 0
 
-            context = {'liste_articles_en_catalogue': liste_articles_en_catalogue}
+            for article in liste_articles_en_catalogue:
+                val_stock_achat += (article['PAU'] * article['en_stock'])
+                val_stock_vente += (article['PVU'] * article['en_stock'])
+
+            context = {'liste_articles_en_catalogue': liste_articles_en_catalogue, 'val_stock_achat': val_stock_achat, 'val_stock_vente': val_stock_vente}
             return render(request, 'pos/ctrl_stock.html', context)
 
 
@@ -224,6 +430,7 @@ def ctrl_article(request, user_id):
             liste_articles = Article.objects.all()
             return render(request, 'pos/ctrl_article.html', {'liste_articles': liste_articles})
 
+
 def ctrl_categorie(request, user_id):
     if not request.user.is_authenticated:
         return HttpResponseRedirect(reverse('pos:login'))
@@ -234,7 +441,8 @@ def ctrl_categorie(request, user_id):
 
 
 def nouvelle_entree(request, user_id):
-    if not request.user.is_authenticated:
+    if not request.user.is_superuser:
+        logout(request)
         return HttpResponseRedirect(reverse('pos:login'))
     else:
         if request.method == 'GET':
@@ -247,21 +455,42 @@ def nouvelle_entree(request, user_id):
                 return JsonResponse({'message': 'operation enregistrée avec succes'}, status=200)
 
 
-def avarie(request, user_id):
-    if not request.user.is_authenticated:
+def nouvelle_avarie(request, user_id):
+    if not request.user.is_superuser:
+        logout(request)
         return HttpResponseRedirect(reverse('pos:login'))
     else:
         if request.method == 'GET':
             liste_articles = Article.objects.all()
-            return render(request, 'pos/avarie.html', {'liste_articles': liste_articles})
+            return render(request, 'pos/avaries/nouvelle_avarie.html', {'liste_articles': liste_articles})
         else:
             if request.is_ajax():
-                avarie = Avarie(article=Article.objects.get(pk = request.POST['article_id']), quantite=request.POST['quantite'], date_avarie=timezone.now())
+                
+                article_avarie = Article.objects.get(pk = request.POST['article_id'])
+                quantite_avariee = int(request.POST['quantite'])
+                stock = quantite_en_stock(article_avarie)
+
+                if stock < quantite_avariee:
+                    return JsonResponse({"status": "error", "titre":"Echec de l'Opération!", "message": "Echec de l'opération. Stock de {} insuffisant.".format(article_avarie)}, status=200)
+
+                avarie = Avarie(article=article_avarie, quantite=quantite_avariee, date_avarie=timezone.now())
                 avarie.save()
-                return JsonResponse({'message': 'operation enregistrée avec succes'}, status=200)
+                return JsonResponse({"status": "success", "titre":"Opération réussie!", 'message': 'operation enregistrée avec succes'}, status=200)
+
+
+def liste_produits_avaries(request, user_id):
+    if not request.user.is_superuser:
+        logout(request)
+        return HttpResponseRedirect(reverse('pos:login'))
+    else:
+        if request.method == 'GET':
+            liste_produits_avaries = Avarie.objects.all()
+            return render(request, 'pos/avaries/liste_produits_avaries.html', {'liste_produits_avaries': liste_produits_avaries})
+
 
 def nouvelle_categorie(request, user_id):
-    if not request.user.is_authenticated:
+    if not request.user.is_superuser:
+        logout(request)
         return HttpResponseRedirect(reverse('pos:login'))
     else:
         if request.method == 'GET':
@@ -274,7 +503,8 @@ def nouvelle_categorie(request, user_id):
 
 
 def nouvelle_article(request, user_id):
-    if not request.user.is_authenticated:
+    if not request.user.is_superuser:
+        logout(request)
         return HttpResponseRedirect(reverse('pos:login'))
     else:
         if request.method == 'GET':
@@ -284,11 +514,20 @@ def nouvelle_article(request, user_id):
             if request.is_ajax():
                 article = Article(categorie=Categorie.objects.get(pk=request.POST['categorie_id']), nom_article=request.POST['nom_article'], PAU=request.POST['PAU'], PVU=request.POST['PVU'])
                 article.save()
+
+                qte=int(request.POST['qte'])
+                if not qte:
+                    qte = 0
+                    
+                entree = Entree(article=article, quantite=qte, date_entree=timezone.now())
+                entree.save()
+                
                 return JsonResponse({'message': 'operation enregistrée avec succes'}, status=200)
 
 
-def mod_article(request, user_id, article_id):
-    if not request.user.is_authenticated:
+def mod_article(request, user_id, article_id, *args, **kwargs):
+    if not request.user.is_superuser:
+        logout(request)
         return HttpResponseRedirect(reverse('pos:login'))
     else:
         if request.method == 'GET':
@@ -303,12 +542,14 @@ def mod_article(request, user_id, article_id):
                 article.nom_article = request.POST['nom_article']
                 article.PAU = request.POST['PAU']
                 article.PVU = request.POST['PVU']
-                
                 article.save()
+                                
                 return JsonResponse({'message': 'operation enregistrée avec succes'}, status=200)
 
+
 def sup_article(request, user_id, article_id):
-    if not request.user.is_authenticated:
+    if not request.user.is_superuser:
+        logout(request)
         return HttpResponseRedirect(reverse('pos:login'))
     else:
         if request.is_ajax() and request.method == 'GET':
@@ -316,8 +557,10 @@ def sup_article(request, user_id, article_id):
             article.delete()
             return JsonResponse({'message': 'operation enregistrée avec succes'}, status=200)
 
+
 def mod_entree(request, user_id, entree_id):
-    if not request.user.is_authenticated:
+    if not request.user.is_superuser:
+        logout(request)
         return HttpResponseRedirect(reverse('pos:login'))
     else:
         if request.method == 'GET':
@@ -335,8 +578,10 @@ def mod_entree(request, user_id, entree_id):
                 entree.save()
                 return JsonResponse({'message': 'operation enregistrée avec succes'}, status=200)
 
+
 def sup_entree(request, user_id, entree_id):
-    if not request.user.is_authenticated:
+    if not request.user.is_superuser:
+        logout(request)
         return HttpResponseRedirect(reverse('pos:login'))
     else:
         if request.is_ajax() and request.method == 'GET':
@@ -346,7 +591,8 @@ def sup_entree(request, user_id, entree_id):
 
 
 def mod_categorie(request, user_id, categorie_id):
-    if not request.user.is_authenticated:
+    if not request.user.is_superuser:
+        logout(request)
         return HttpResponseRedirect(reverse('pos:login'))
     else:
         if request.method == 'GET':
@@ -361,8 +607,10 @@ def mod_categorie(request, user_id, categorie_id):
                 categorie.save()
                 return JsonResponse({'message': 'operation enregistrée avec succes'}, status=200)
 
+
 def sup_categorie(request, user_id, categorie_id):
-    if not request.user.is_authenticated:
+    if not request.user.is_superuser:
+        logout(request)
         return HttpResponseRedirect(reverse('pos:login'))
     else:
         if request.is_ajax() and request.method == 'GET':
@@ -372,7 +620,8 @@ def sup_categorie(request, user_id, categorie_id):
 
 
 def ctrl_caisse(request, user_id):
-    if not request.user.is_authenticated:
+    if not request.user.is_superuser:
+        logout(request)
         return HttpResponseRedirect(reverse('pos:login'))
     else:
         if request.method == 'GET':
@@ -384,9 +633,19 @@ def catalogue_et_stock():
     liste_articles_en_catalogue = []
 
     for article in articles_en_catalogue:
-        liste_articles_en_catalogue.append({"categorie": article.categorie, "nom_article": article.nom_article, "PAU": article.PAU, "PVU": article.PVU, "en_stock": quantite_en_stock(article)})
+        entree=Entree.objects.filter(article = article.id)
 
-    return liste_articles_en_catalogue;
+        if len(entree):
+            id_derniere_entree = entree[len(entree)-1].pk
+        else:
+            entree = Entree(article=article, quantite=0, date_entree=timezone.now())
+            entree.save()
+            id_derniere_entree = entree.id
+
+
+        liste_articles_en_catalogue.append({"id": article.id, "categorie": article.categorie, "nom_article": article.nom_article, "PAU": article.PAU, "PVU": article.PVU, "en_stock": quantite_en_stock(article), "id_derniere_entree": id_derniere_entree})
+
+    return liste_articles_en_catalogue
         
 
 def quantite_en_stock(article_recherche):
@@ -408,69 +667,3 @@ def quantite_en_stock(article_recherche):
     
     return total_entree - total_sortie - total_avarie
 
-
-def Caisse():
-    caisse = [
-        {
-            'coupure': 5,
-            'qte': 0
-        },
-        {
-            'coupure': 10,
-            'qte': 0,
-        },
-        {
-            'coupure': 25,
-            'qte': 0,
-        },
-        {
-            'coupure': 50,
-            'qte': 0,
-        },
-        {
-            'coupure': 100,
-            'qte': 0,
-        },
-        {
-            'coupure': 200,
-            'qte': 0,
-        },
-        {
-            'coupure': 250,
-            'qte': 0,
-        },
-        {
-            'coupure': 500,
-            'qte': 0,
-        },
-        {
-            'coupure': 1000,
-            'qte': 0,
-        },
-        {
-            'coupure': 2000,
-            'qte': 0,
-        },
-        {
-            'coupure': 5000,
-            'qte': 0,
-        },
-        {
-            'coupure': 10000,
-            'qte': 0,
-        },
-    ]
-
-    coupures = Coupures.objects.all()
-
-    for coupure in coupures:
-        if coupure.operation_caisse.type_operation == 'encaissement':
-            for i, elt in enumerate(caisse):
-                if elt['coupure'] == coupure.coupure:
-                    caisse[i]['qte'] += coupure.qte
-        else:
-            for i, elt in enumerate(caisse):
-                if elt['coupure'] == coupure.coupure:
-                    caisse[i]['qte'] -= coupure.qte
-    caisse.reverse()
-    return caisse

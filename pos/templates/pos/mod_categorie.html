@@ -22,7 +22,8 @@
                 },
                 success: function (response) {
                     swal("Opération réussie!", "Catégorie modifiée!", "success").then(res => {
-                        location.replace("/pos/" + "{{user.id}}" + "/controle/categories/");
+                        //location.replace("/pos/" + "{{user.id}}" + "/controle/categories/");
+                        window.location = document.referrer;
                     });
                 },
                 error: function (response) {
@@ -33,7 +34,8 @@
 
         $("#annuler").on('click', function (e) {
             e.preventDefault();
-            location.replace("/pos/" + "{{user.id}}" + "/controle/categories/");
+            //location.replace("/pos/" + "{{user.id}}" + "/controle/categories/");
+            window.location = document.referrer;
         });
 
         $("#supprimer").on('click', function (e) {
@@ -43,7 +45,8 @@
                 url: "{% url 'pos:sup_categorie' user.id categorie.id %}",
                 success: function (response) {
                     swal("Opération réussie!", "Catégorie supprimée!", "success").then(res => {
-                        location.replace("/pos/" + "{{user.id}}" + "/controle/categories/");
+                        //location.replace("/pos/" + "{{user.id}}" + "/controle/categories/");
+                        window.location = document.referrer;
                     });
                 },
                 error: function (response) {

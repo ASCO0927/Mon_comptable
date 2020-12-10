@@ -29,7 +29,8 @@
                 },
                 success: function (response) {
                     swal("Opération réussie!", "Article modifié!", "success").then(res => {
-                        location.replace("/pos/" + "{{user.id}}" + "/controle/articles/");
+                        //location.replace("/pos/" + "{{user.id}}" + "/controle/articles/");
+                        window.location = document.referrer;
                     });
                 },
                 error: function (response) {
@@ -40,7 +41,8 @@
 
         $("#annuler").on('click', function (e) {
             e.preventDefault();
-            location.replace("/pos/" + "{{user.id}}" + "/controle/articles/");
+            //location.replace("/pos/" + "{{user.id}}" + "/controle/articles/");
+            window.location = document.referrer;
         });
 
         $("#supprimer").on('click', function (e) {
@@ -50,7 +52,8 @@
                 url: "{% url 'pos:sup_article' user.id article.id %}",
                 success: function (response) {
                     swal("Opération réussie!", "Article supprimé!", "success").then(res => {
-                        location.replace("/pos/" + "{{user.id}}" + "/controle/articles/");
+                        //location.replace("/pos/" + "{{user.id}}" + "/controle/articles/");
+                        window.location = document.referrer;
                     });
                 },
                 error: function (response) {

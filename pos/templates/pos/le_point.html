@@ -161,6 +161,8 @@
                         montant_total = montant_total + Number(element.prix) * Number(element.quantite);
                     });
                     $('#montant_total').html(`<div id="montant_total" class="row" style="margin-top: 15px; margin-left: 10px;">Montant total : ` + montant_total + ` </div>`);
+                    $('#benefice_periode').html(`<div id="montant_total" class="row" style="margin-top: 15px; margin-left: 10px;">Benefice sur la periode : ` + response.benefice_periode + ` </div>`);
+
                 },
                 error: function (response) {
                     alert('ooooooooooooooooo');
@@ -261,6 +263,8 @@
 
             </div>
             <div id="montant_total" class="row" style="margin-top: 10px; margin-left: 10px;">Montant total : </div>
+            
+            <div id="benefice_periode" class="row" style="margin-top: 10px; margin-left: 10px;">Benefice sur la periode : </div>
         </div>
     </div>
 </div>

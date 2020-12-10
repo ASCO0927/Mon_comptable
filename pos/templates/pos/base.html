@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
     <title>{% block title %}{% endblock %}</title>
     {% load static %}
@@ -26,6 +27,9 @@
     <link rel="stylesheet" type="text/css" href="{% static 'pos/select2.min.css' %}">
     <script src="{% static 'pos/select2.min.js' %}"></script>
 
+    <link rel="stylesheet" type="text/css" href="{% static 'pos/print.min.css' %}">
+    <script src="{% static 'pos/print.min.js' %}"></script>
+
     {% block script %}{% endblock %}
 </head>
 
@@ -45,6 +49,7 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'pos:vente' user.id %}">Vente <span class="sr-only">(current)</span></a>
                 </li>
+                
                 {% if user.is_superuser %}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -75,7 +80,10 @@
                     </div>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'pos:avarie' user.id %}">Avarie</a>
+                    <a class="nav-link" href="{% url 'pos:liste_produits_avaries' user.id %}">Avarie</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'pos:lst_client' %}">Clients</a>
                 </li>
                 {% endif %}
                 
