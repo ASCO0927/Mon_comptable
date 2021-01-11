@@ -54,7 +54,7 @@
                 <select class="js-states form-control" id="select_article_id" name="article">
                     <option value="" disabled selected hidden>Choisir</option>
                     {% for article in liste_articles %}
-                    <option value="{{article.id}}">{{article.nom_article}}</option>
+                    <option value="{{article.id}}">{{article.nom_article}}, {{article.code_barres}}</option>
                     {% endfor %}
                 </select>
             </div>

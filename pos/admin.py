@@ -6,7 +6,7 @@ class CategorieAdmin(admin.ModelAdmin):
 
 class ArticleAdmin(admin.ModelAdmin):
     search_fields = ['nom_article']
-    list_display = ('nom_article', 'PAU', 'PVU', 'categorie')
+    list_display = ('nom_article', 'code_barres', 'date_peremption', 'PAU', 'PVU', 'categorie')
     
 
 class EntreeAdmin(admin.ModelAdmin):
@@ -34,3 +34,4 @@ admin.site.register(Sortie, SortieAdmin)
 admin.site.register(Vente, VenteAdmin)
 admin.site.register(ArretOperation)
 admin.site.register(Controle)
+admin.site.register(Caisse)

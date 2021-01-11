@@ -92,6 +92,8 @@ class Categorie(models.Model):
 class Article(models.Model):
     categorie = models.ForeignKey(Categorie, on_delete=models.CASCADE)
     nom_article = models.CharField(max_length=200)
+    code_barres = models.CharField(max_length=200, blank=True, null=True, unique=True) #nouvo
+    date_peremption = models.DateTimeField('date peremption', blank=True, null=True) #nouvo
     PAU = models.DecimalField(max_digits=19, decimal_places=2)
     PVU = models.DecimalField(max_digits=19, decimal_places=2)
 

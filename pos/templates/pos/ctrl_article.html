@@ -32,6 +32,7 @@
                         <th>Article</th>
                         <th>PAU</th>
                         <th>PVU</th>
+                        <th>Code Barres</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -42,6 +43,7 @@
                         <td>{{ article.nom_article }}</td>
                         <td>{{ article.PAU }}</td>
                         <td>{{ article.PVU }}</td>
+                        <td>{{ article.code_barres }}</td>
                         <td><a type="button" href="{% url 'pos:mod_article' user.id article.id %}" class="btn btn-primary">Modifier</a></td>
                     </tr>
                     {% endfor %}

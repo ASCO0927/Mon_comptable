@@ -277,7 +277,10 @@ def vente(request, user_id):
     else:
         if request.method == 'POST':
             liste_articles_a_vendre = request.POST['liste_articles_a_vendre']
-            client = Client.objects.get(id=request.POST['client_id'])
+            
+            if request.POST['client_id'] != '':
+                client = Client.objects.get(id=request.POST['client_id'])
+            
             mode_paiement = request.POST['mode_paiement']
             now = timezone.now()
 
@@ -294,7 +297,10 @@ def vente(request, user_id):
                 if quantite_en_stock(article_a_vendre) < quantite:
                     return HttpResponse('la vente a echouee. Stock de {} insuffisant.'.format(article))
 
-            vente = Vente(vendeur=User.objects.get(id=user_id), date_vente=now, client=client)
+            if request.POST['client_id'] != '':
+                vente = Vente(vendeur=User.objects.get(id=user_id), date_vente=now, client=client)
+            else:
+                vente = Vente(vendeur=User.objects.get(id=user_id), date_vente=now)
             vente.save()
 
             montant_vente = 0
@@ -310,25 +316,30 @@ def vente(request, user_id):
                 sortie.save()
 
             #maj solde
-            if mode_paiement == 'compte':
-                solde_avant = int(client.solde)
-                solde_apres = solde_avant - montant_vente
-                client.solde = solde_apres
-                client.save()
-            elif mode_paiement == 'liquide':
-                solde_avant = int(client.solde)
-                solde_apres = int(client.solde)
+            if request.POST['client_id'] != '':
+                if mode_paiement == 'compte':
+                    solde_avant = int(client.solde)
+                    solde_apres = solde_avant - montant_vente
+                    client.solde = solde_apres
+                    client.save()
+                elif mode_paiement == 'liquide':
+                    solde_avant = int(client.solde)
+                    solde_apres = int(client.solde)
 
+                    #maj caisse
+                    caisse.montant += montant_vente
+                    caisse.save()
+                else:
+                    return HttpResponse('Echec de la transaction! le mode de paiment {} n est pas connu du systeme'.format(mode_paiement))
+            else:
                 #maj caisse
                 caisse.montant += montant_vente
                 caisse.save()
 
-            else:
-                return HttpResponse('Echec de la transaction! le mode de paiment {} n est pas connu du systeme'.format(mode_paiement))
-
             #hist transact
-            hist_transac = HistoriqueTransactionsClient(client=client, montant = montant_vente, type_transaction=mode_paiement, vente=vente, solde_avant=solde_avant, solde_apres=solde_apres, date_transaction=datetime.now())
-            hist_transac.save()
+            if request.POST['client_id'] != '':
+                hist_transac = HistoriqueTransactionsClient(client=client, montant = montant_vente, type_transaction=mode_paiement, vente=vente, solde_avant=solde_avant, solde_apres=solde_apres, date_transaction=datetime.now())
+                hist_transac.save()
 
             return JsonResponse({'message': 'operation enregistrée avec succes', 'caisse': caisse.montant}, status=200)
         else:
@@ -375,19 +386,33 @@ def ctrl_vente(request, user_id):
                     liste_articles_vente.append({'nom_article': sortie.article.nom_article, 'prix': sortie.article.PVU, 'quantite': sortie.quantite})
                     montant_vente = montant_vente + sortie.article.PVU * sortie.quantite
 
-                return JsonResponse(
-                    {
-                        'id': request.POST['id'], 
-                        'vendeur': vente.vendeur.username, 
-                        'jour': vente.date_vente.strftime("%d/%m/%Y"), 
-                        'heure': vente.date_vente.strftime("%H:%M"), 
-                        'montant_encaisse': vente.montant_encaisse , 
-                        'monnaie_rendue': vente.monnaie_rendue, 
-                        'articles':liste_articles_vente, 
-                        'montant_vente': montant_vente,
-                        'client': '{} {}'.format(vente.client.nom, vente.client.prenoms),
-                    }, 
-                status=200)
+                if vente.client:
+                    return JsonResponse(
+                        {
+                            'id': request.POST['id'], 
+                            'vendeur': vente.vendeur.username, 
+                            'jour': vente.date_vente.strftime("%d/%m/%Y"), 
+                            'heure': vente.date_vente.strftime("%H:%M"), 
+                            'montant_encaisse': vente.montant_encaisse , 
+                            'monnaie_rendue': vente.monnaie_rendue, 
+                            'articles':liste_articles_vente, 
+                            'montant_vente': montant_vente,
+                            'client': '{} {}'.format(vente.client.nom, vente.client.prenoms),
+                        }, 
+                    status=200)
+                else:
+                    return JsonResponse(
+                        {
+                            'id': request.POST['id'], 
+                            'vendeur': vente.vendeur.username, 
+                            'jour': vente.date_vente.strftime("%d/%m/%Y"), 
+                            'heure': vente.date_vente.strftime("%H:%M"), 
+                            'montant_encaisse': vente.montant_encaisse , 
+                            'monnaie_rendue': vente.monnaie_rendue, 
+                            'articles':liste_articles_vente, 
+                            'montant_vente': montant_vente,
+                        }, 
+                    status=200)
 
 
 def ctrl_stock(request, user_id):
@@ -512,7 +537,41 @@ def nouvelle_article(request, user_id):
             return render(request, 'pos/nouvelle_article.html', {'liste_categories': liste_categories})
         else:
             if request.is_ajax():
-                article = Article(categorie=Categorie.objects.get(pk=request.POST['categorie_id']), nom_article=request.POST['nom_article'], PAU=request.POST['PAU'], PVU=request.POST['PVU'])
+                
+                if request.POST['date_peremption'] == '' and request.POST['code_barres'] == '':
+                    article = Article(
+                        categorie=Categorie.objects.get(pk=request.POST['categorie_id']),
+                        nom_article=request.POST['nom_article'], 
+                        PAU=request.POST['PAU'], 
+                        PVU=request.POST['PVU']
+                    )
+                elif request.POST['date_peremption'] != '' and request.POST['code_barres'] == '':
+                    article = Article(
+                        categorie=Categorie.objects.get(pk=request.POST['categorie_id']),
+                        #code_barres=request.POST['code_barres'], 
+                        date_peremption=request.POST['date_peremption'], 
+                        nom_article=request.POST['nom_article'], 
+                        PAU=request.POST['PAU'], 
+                        PVU=request.POST['PVU'],
+                    )
+                elif request.POST['date_peremption'] == '' and request.POST['code_barres'] != '':
+                    article = Article(
+                        categorie=Categorie.objects.get(pk=request.POST['categorie_id']),
+                        code_barres=request.POST['code_barres'], 
+                        #date_peremption=request.POST['date_peremption'], 
+                        nom_article=request.POST['nom_article'], 
+                        PAU=request.POST['PAU'], 
+                        PVU=request.POST['PVU'],
+                    )
+                elif request.POST['date_peremption'] != '' and request.POST['code_barres'] != '':
+                    article = Article(
+                        categorie=Categorie.objects.get(pk=request.POST['categorie_id']),
+                        code_barres=request.POST['code_barres'], 
+                        date_peremption=request.POST['date_peremption'], 
+                        nom_article=request.POST['nom_article'], 
+                        PAU=request.POST['PAU'], 
+                        PVU=request.POST['PVU'],
+                    )
                 article.save()
 
                 qte=int(request.POST['qte'])
@@ -542,6 +601,12 @@ def mod_article(request, user_id, article_id, *args, **kwargs):
                 article.nom_article = request.POST['nom_article']
                 article.PAU = request.POST['PAU']
                 article.PVU = request.POST['PVU']
+                
+                if request.POST['date_peremption'] != '':
+                    article.date_peremption = request.POST['date_peremption']
+                if request.POST['code_barres'] != '' and request.POST['code_barres'] != 'None':
+                    article.code_barres = request.POST['code_barres']
+
                 article.save()
                                 
                 return JsonResponse({'message': 'operation enregistrée avec succes'}, status=200)
@@ -643,7 +708,7 @@ def catalogue_et_stock():
             id_derniere_entree = entree.id
 
 
-        liste_articles_en_catalogue.append({"id": article.id, "categorie": article.categorie, "nom_article": article.nom_article, "PAU": article.PAU, "PVU": article.PVU, "en_stock": quantite_en_stock(article), "id_derniere_entree": id_derniere_entree})
+        liste_articles_en_catalogue.append({"id": article.id, "code_barres": article.code_barres, "date_peremption": article.date_peremption,  "categorie": article.categorie, "nom_article": article.nom_article, "PAU": article.PAU, "PVU": article.PVU, "en_stock": quantite_en_stock(article), "id_derniere_entree": id_derniere_entree})
 
     return liste_articles_en_catalogue
         

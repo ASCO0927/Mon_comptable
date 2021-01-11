@@ -26,6 +26,8 @@
                     nom_article: $('#nom_article').val(),
                     PAU: $('#PAU').val(),
                     PVU: $('#PVU').val(),
+                    code_barres: $('#code_barres').val(),
+                    date_peremption: $('#date_peremption').val(),
                 },
                 success: function (response) {
                     swal("Opération réussie!", "Article modifié!", "success").then(res => {
@@ -96,6 +98,14 @@
             <div class="form-group">
                 <label for="exampleFormControlInput1">Prix De Vente Unitaire de l'article</label>
                 <input type="number" class="form-control" id="PVU" step=".01" value="{{article.PVU}}">
+            </div> 
+            <div class="form-group">
+                <label for="exampleFormControlInput1">Code barres</label>
+                <input type="text" class="form-control" id="code_barres" value="{{article.code_barres}}">
+            </div>
+            <div class="form-group">
+                <label for="exampleFormControlInput1">Date peremption</label>
+                <input type="date" class="form-control" id="date_peremption" value="{{article.date_peremption}}">
             </div>
             <button id="supprimer" class="btn btn-danger mb-2">Supprimer</button>
             <button type="submit" id="enregister" class="btn btn-success mb-2 float-right"
