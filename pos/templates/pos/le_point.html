@@ -33,7 +33,7 @@
         var table1 = $('#table1').DataTable({
             "bInfo": false,
             "paging": true,
-            "ordering": false,
+            //"ordering": false,
             //"bFilter": false,
             "bPaginate": false,
             language: {
@@ -109,14 +109,16 @@
                         if (!categories.includes(element.categorie)) {
                             categories.push(element.categorie);
                             $('#table2-div').append(
-                                `<table id="` + element.categorie + `" class="table table-striped table-bordered " style="width:100%">
+                                `<table id="` + element.categorie + `" class="table table-striped table-bordered test" style="width:100%">
                                         <thead>
                                             <tr>
                                                 <th>Categorie</th>
                                                 <th>Article</th>
-                                                <th>Prix</th>
+                                                <th>PAU</th>
+                                                <th>PVU</th>
                                                 <th>Qte Vendus</th>
-                                                <th>Montant</th>
+                                                <th>Montant Vente</th>
+                                                <th>Benefice</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -138,31 +140,43 @@
                                     `<tr>
                                         <td>`+ element.categorie + `</td>
                                         <td>`+ element.nom_article + `</td>
-                                        <td>`+ element.prix + `</td>
+                                        <td>`+ element.PAU + `</td>
+                                        <td>`+ element.PVU + `</td>
                                         <td>`+ element.quantite + `</td>
-                                        <td>`+ Number(element.prix) * Number(element.quantite) + `</td>
+                                        <td>`+ Number(element.PVU) * Number(element.quantite) + `</td>
+                                        <td>`+ element.quantite*(element.PVU-element.PAU)+ `</td>
                                     </tr>`
                             }
                         });
                         $('#' + ctg + ' tbody').append(rows);
+
+                        $('#'+ctg).DataTable({
+                            "bInfo": false,
+                            "paging": false,
+                            "bPaginate": false,
+                            language: {
+                                search: "",
+                                searchPlaceholder: "Recherche"
+                            }
+                        });
+
                     });
                     console.log(response.art_vendus);
                     categories.forEach(ctg => {
                         let montant = 0;
                         response.art_vendus.forEach(element => {
                             if (element.categorie == ctg) {
-                                montant = montant + Number(element.prix) * Number(element.quantite);
+                                montant = montant + Number(element.PVU) * Number(element.quantite);
                             }
                         });
                         $('#montant_total_' + ctg).html(`<div id="montant_total_` + ctg + `" class="row" style="margin-top: 8px; margin-left: 10px;  margin-bottom: 60px">Montant ` + ctg + ` : ` + montant + ` </div>`);
                     });
 
                     response.art_vendus.forEach(element => {
-                        montant_total = montant_total + Number(element.prix) * Number(element.quantite);
+                        montant_total = montant_total + Number(element.PVU) * Number(element.quantite);
                     });
                     $('#montant_total').html(`<div id="montant_total" class="row" style="margin-top: 15px; margin-left: 10px;">Montant total : ` + montant_total + ` </div>`);
                     $('#benefice_periode').html(`<div id="montant_total" class="row" style="margin-top: 15px; margin-left: 10px;">Benefice sur la periode : ` + response.benefice_periode + ` </div>`);
-
                 },
                 error: function (response) {
                     alert('ooooooooooooooooo');

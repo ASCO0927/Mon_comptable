@@ -58,11 +58,11 @@ def le_point(request, user_id):
                         art_vendus[j]['quantite'] = art_vendus[j]['quantite'] + sortie.quantite
                         unique = False
                 if unique:
-                    art_vendus.append({'categorie': sortie.article.categorie.nom_categorie, 'nom_article': sortie.article.nom_article, 'prix': sortie.article.PVU, 'quantite': sortie.quantite, 'benefice': sortie.quantite * (int(sortie.article.PVU) - int(sortie.article.PAU)) })
+                    art_vendus.append({'categorie': sortie.article.categorie.nom_categorie, 'nom_article': sortie.article.nom_article, 'PAU': sortie.article.PAU, 'PVU': sortie.article.PVU, 'quantite': sortie.quantite})
             
             benefice_periode = 0
             for vente in art_vendus:
-                benefice_periode += vente['benefice']
+                benefice_periode += (vente['PVU']-vente['PAU'])*vente['quantite']
 
             return JsonResponse({'date_debut': controle.date_debut, 'date_fin': controle.date_fin, 'art_vendus': art_vendus, 'benefice_periode': benefice_periode}, status=200)
 
