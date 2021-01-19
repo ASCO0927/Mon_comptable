@@ -30,7 +30,7 @@
                 success: function (response) {
                     swal("Opération réussie!", "Entrée enregistrée!", "success").then(res => {
                         location.replace("/pos/"+"{{user.id}}"+"/controle/entrees/");
-                    });
+                    }); 
                 },
                 error: function (response) {
                     swal("Erreur!", "Une erreur s'est produite. Contactez le +22665136188 si l'erreur persiste!", "error");

@@ -57,28 +57,25 @@ class Caisse(models.Model):
         return str(self.id)
 
 
-class OperationsCaisse(models.Model):
-    choix_operation = models.TextChoices('choix_operation', 'encaissement decaissement')
-    choix_motif = models.TextChoices('choix_motif', 'vente depot_petite_monnaie ramassage')
-
+class HistoriqueDepotRamassageCaisse(models.Model):
+    choix_operation = models.TextChoices('choix_operation', 'depot ramassage')
+    operateur = models.ForeignKey(User, on_delete=models.CASCADE)
+    montant = models.IntegerField(default=0)
     type_operation = models.CharField(choices=choix_operation.choices, max_length=200)
-    motif = models.CharField(choices=choix_motif.choices, max_length=200)#vente ou depot de petite monnaie
-    numero_vente = models.ForeignKey(Vente, blank=True, null=True, on_delete=models.CASCADE)
     date_operation = models.DateTimeField('date encaissement')
     
-
     def __str__(self):
-        return str(self.id)
+        return "{}, {}, {}, {}".format(self.date_operation, self.type_operation, self.montant, self.operateur)
 
-
+'''
 class Coupures(models.Model):
     operation_caisse = models.ForeignKey(OperationsCaisse, on_delete=models.CASCADE)
-    coupure = models.IntegerField(default=0) #ex: 1000fcfa, 1000fcfa
+    coupure = models.IntegerField(default=0)
     qte = models.IntegerField(default=0)
 
     def __str__(self):
         return "coupure: {}, qte: {}".format(self.coupure, self.qte)
-
+'''
 #fin classes de la caisse
 
 
