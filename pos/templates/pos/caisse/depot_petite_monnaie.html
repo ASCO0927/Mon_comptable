@@ -34,6 +34,11 @@
         $('#enregistrer').on('click', function (e) {
             e.preventDefault();
 
+            if ( parseFloat($('#encaissement_input_id').val()) < 0) {
+                swal("Erreur!", "montant invalide", "error");
+                return false;
+            }
+
             $.ajax({
                 type: 'POST',
                 url: "{% url 'pos:depot_petite_monnaie' user.id %}",

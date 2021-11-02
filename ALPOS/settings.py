@@ -10,7 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
-use_sqlite_db = False
+use_sqlite_db = True
+#use_sqlite_db = False
 
 import os
 
@@ -131,6 +132,9 @@ USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
+DEFAULT_AUTO_FIELD='django.db.models.AutoField' 
+
+
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'

@@ -1,0 +1,97 @@
+INFO:django.utils.autoreload:/home/nouhoun/Documents/labo/ALPOS-dev/pos/views.py changed, reloading.
+DEBUG:asyncio:Using selector: EpollSelector
+INFO:django.utils.autoreload:/home/nouhoun/Documents/labo/ALPOS-dev/pos/views.py changed, reloading.
+DEBUG:asyncio:Using selector: EpollSelector
+INFO:root:Le prix de vente unitaire doit etre un nombre
+ERROR:django.request:Not Extended: /pos/1/controle/nouvelle_article/
+WARNING:django.request:Not Found: /favicon.ico
+INFO:root:Le prix de vente unitaire doit etre un nombre
+ERROR:django.request:Not Extended: /pos/1/controle/nouvelle_article/
+INFO:root:Le prix de vente unitaire doit etre un nombre
+ERROR:django.request:Not Extended: /pos/1/controle/nouvelle_article/
+INFO:root:Le prix de vente unitaire doit etre un nombre
+ERROR:django.request:Not Extended: /pos/1/controle/nouvelle_article/
+INFO:root:Le prix de vente unitaire doit etre un nombre
+ERROR:django.request:Not Extended: /pos/1/controle/nouvelle_article/
+INFO:root:Le prix de vente unitaire doit etre un nombre
+ERROR:django.request:Not Extended: /pos/1/controle/nouvelle_article/
+INFO:root:Le prix de vente unitaire doit etre un nombre
+ERROR:django.request:Not Extended: /pos/1/controle/nouvelle_article/
+INFO:root:Le prix de vente unitaire doit etre un nombre
+ERROR:django.request:Not Extended: /pos/1/controle/nouvelle_article/
+INFO:root:Le prix de vente unitaire doit etre un nombre
+ERROR:django.request:Not Extended: /pos/1/controle/nouvelle_article/
+ERROR:django.request:Not Extended: /pos/1/controle/nouvelle_article/
+DEBUG:asyncio:Using selector: EpollSelector
+WARNING:django.request:Not Found: /
+WARNING:django.request:Not Found: /favicon.ico
+DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
+DEBUG:PIL.PngImagePlugin:STREAM b'PLTE' 41 222
+DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 275 4574
+DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
+DEBUG:PIL.PngImagePlugin:STREAM b'zTXt' 41 17596
+DEBUG:PIL.PngImagePlugin:STREAM b'iCCP' 17649 389
+DEBUG:PIL.PngImagePlugin:iCCP profile name b'ICC profile'
+DEBUG:PIL.PngImagePlugin:Compression method 0
+DEBUG:PIL.PngImagePlugin:STREAM b'bKGD' 18050 6
+DEBUG:PIL.PngImagePlugin:b'bKGD' 18050 6 (unknown)
+DEBUG:PIL.PngImagePlugin:STREAM b'pHYs' 18068 9
+DEBUG:PIL.PngImagePlugin:STREAM b'tIME' 18089 7
+DEBUG:PIL.PngImagePlugin:b'tIME' 18089 7 (unknown)
+DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 18108 8192
+DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
+DEBUG:PIL.PngImagePlugin:STREAM b'PLTE' 41 222
+DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 275 4574
+DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
+DEBUG:PIL.PngImagePlugin:STREAM b'zTXt' 41 17596
+DEBUG:PIL.PngImagePlugin:STREAM b'iCCP' 17649 389
+DEBUG:PIL.PngImagePlugin:iCCP profile name b'ICC profile'
+DEBUG:PIL.PngImagePlugin:Compression method 0
+DEBUG:PIL.PngImagePlugin:STREAM b'bKGD' 18050 6
+DEBUG:PIL.PngImagePlugin:b'bKGD' 18050 6 (unknown)
+DEBUG:PIL.PngImagePlugin:STREAM b'pHYs' 18068 9
+DEBUG:PIL.PngImagePlugin:STREAM b'tIME' 18089 7
+DEBUG:PIL.PngImagePlugin:b'tIME' 18089 7 (unknown)
+DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 18108 8192
+DEBUG:asyncio:Using selector: EpollSelector
+DEBUG:asyncio:Using selector: EpollSelector
+WARNING:django.request:Not Found: /favicon.ico
+INFO:django.utils.autoreload:/home/nouhoun/Documents/labo/ALPOS-dev/pos/views.py changed, reloading.
+DEBUG:asyncio:Using selector: EpollSelector
+INFO:django.utils.autoreload:/home/nouhoun/Documents/labo/ALPOS-dev/pos/views.py changed, reloading.
+DEBUG:asyncio:Using selector: EpollSelector
+DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
+DEBUG:PIL.PngImagePlugin:STREAM b'PLTE' 41 222
+DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 275 4574
+DEBUG:PIL.PngImagePlugin:STREAM b'IHDR' 16 13
+DEBUG:PIL.PngImagePlugin:STREAM b'zTXt' 41 17596
+DEBUG:PIL.PngImagePlugin:STREAM b'iCCP' 17649 389
+DEBUG:PIL.PngImagePlugin:iCCP profile name b'ICC profile'
+DEBUG:PIL.PngImagePlugin:Compression method 0
+DEBUG:PIL.PngImagePlugin:STREAM b'bKGD' 18050 6
+DEBUG:PIL.PngImagePlugin:b'bKGD' 18050 6 (unknown)
+DEBUG:PIL.PngImagePlugin:STREAM b'pHYs' 18068 9
+DEBUG:PIL.PngImagePlugin:STREAM b'tIME' 18089 7
+DEBUG:PIL.PngImagePlugin:b'tIME' 18089 7 (unknown)
+DEBUG:PIL.PngImagePlugin:STREAM b'IDAT' 18108 8192
+INFO:django.utils.autoreload:/home/nouhoun/Documents/labo/ALPOS-dev/pos/models.py changed, reloading.
+DEBUG:asyncio:Using selector: EpollSelector
+INFO:django.utils.autoreload:/home/nouhoun/Documents/labo/ALPOS-dev/pos/models.py changed, reloading.
+DEBUG:asyncio:Using selector: EpollSelector
+INFO:django.utils.autoreload:/home/nouhoun/Documents/labo/ALPOS-dev/pos/models.py changed, reloading.
+DEBUG:asyncio:Using selector: EpollSelector
+INFO:django.utils.autoreload:/home/nouhoun/Documents/labo/ALPOS-dev/pos/views.py changed, reloading.
+DEBUG:asyncio:Using selector: EpollSelector
+INFO:django.utils.autoreload:/home/nouhoun/Documents/labo/ALPOS-dev/pos/views.py changed, reloading.
+DEBUG:asyncio:Using selector: EpollSelector
+INFO:django.utils.autoreload:/home/nouhoun/Documents/labo/ALPOS-dev/pos/views.py changed, reloading.
+DEBUG:asyncio:Using selector: EpollSelector
+INFO:django.utils.autoreload:/home/nouhoun/Documents/labo/ALPOS-dev/pos/views.py changed, reloading.
+DEBUG:asyncio:Using selector: EpollSelector
+INFO:django.utils.autoreload:/home/nouhoun/Documents/labo/ALPOS-dev/pos/views.py changed, reloading.
+DEBUG:asyncio:Using selector: EpollSelector
+INFO:django.utils.autoreload:/home/nouhoun/Documents/labo/ALPOS-dev/pos/views.py changed, reloading.
+DEBUG:asyncio:Using selector: EpollSelector
+DEBUG:asyncio:Using selector: EpollSelector
+INFO:django.utils.autoreload:/home/nouhoun/Documents/labo/ALPOS-dev/pos/views.py changed, reloading.
+DEBUG:asyncio:Using selector: EpollSelector

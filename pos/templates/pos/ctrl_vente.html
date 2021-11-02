@@ -17,6 +17,9 @@
 {% block script %}
 <script>
     $(document).ready(function () {
+
+        var id_vente = NaN;
+
         var table1 = $('#table1').DataTable({
             "select": true,
             "bInfo": false,
@@ -61,6 +64,9 @@
                     $('#monnaie_rendue').html('' + response.monnaie_rendue);
                     $('#vendeur').html('' + response.vendeur);
                     $('#client').html('' + response.client);
+
+                    id_vente = response.id;//id_vente
+
                 },
                 error: function (response) {
                     alert('ooooooooooooooooo');
@@ -68,6 +74,26 @@
             });
         });
 
+        $("#annuler-bouton").on('click', function () {
+            $.ajax({
+                type: 'POST',
+                url: "{% url 'pos:annuler_vente' user.id %}",
+                data: {
+                    csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+                    id: id_vente,
+                },
+                success: function (response) {
+                    swal("Opération réussie!", "Vente annulée!", "success").then(res => {
+                        location.replace("/pos/" + "{{user.id}}" + "/controle/vente/");
+                    });
+                },
+                error: function (response) {
+                    alert('ooooooooooooooooo');
+                }
+            });
+        });
+        
+        
 
         function supprimer_lignes_tables_article() {
             categories.forEach(categorie => {
@@ -122,7 +148,7 @@
             </div>
 
             <div class="row">
-                <div class="col-12">
+                <div class="col-6">
                     <div class="row" style="margin-top: 15px;">
                         <div class="col-12">
                             <div style="font-weight:bold">MONTANT VENTE : <span id="montant_vente">0</span> FCFA
@@ -144,6 +170,11 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="col-6">
+                    <button class="btn btn-danger float-right" id="annuler-bouton">Annuler la vente</button>
+                </div>
+
             </div>
         </div>
     </div>

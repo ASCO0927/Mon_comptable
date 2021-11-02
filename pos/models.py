@@ -37,7 +37,7 @@ class Vente(models.Model):
 class HistoriqueTransactionsClient(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
     montant = models.IntegerField(default=0)
-    type_transaction = models.CharField(max_length=200) #liquide, compte
+    type_transaction = models.CharField(max_length=200) #liquide, compte, depot, orange_money
     vente = models.ForeignKey(Vente, blank=True, null=True, on_delete=models.CASCADE)
     depot = models.ForeignKey(Depot, blank=True, null=True, on_delete=models.CASCADE)
     solde_avant = models.IntegerField(default=0)
@@ -54,7 +54,7 @@ class Caisse(models.Model):
     montant = models.IntegerField(default=0)
 
     def __str__(self):
-        return str(self.id)
+        return str(self.montant)
 
 
 class HistoriqueDepotRamassageCaisse(models.Model):
@@ -66,16 +66,24 @@ class HistoriqueDepotRamassageCaisse(models.Model):
     
     def __str__(self):
         return "{}, {}, {}, {}".format(self.date_operation, self.type_operation, self.montant, self.operateur)
+    
 
-'''
-class Coupures(models.Model):
-    operation_caisse = models.ForeignKey(OperationsCaisse, on_delete=models.CASCADE)
-    coupure = models.IntegerField(default=0)
-    qte = models.IntegerField(default=0)
+class CompteOrangeMoney(models.Model):
+    montant = models.IntegerField(default=0)
 
     def __str__(self):
-        return "coupure: {}, qte: {}".format(self.coupure, self.qte)
-'''
+        return str(self.montant)
+
+class HistoriqueDepotRamassageCompteOrangeMoney(models.Model):
+    choix_operation = models.TextChoices('choix_operation', 'depot ramassage')
+    operateur = models.ForeignKey(User, on_delete=models.CASCADE)
+    montant = models.IntegerField(default=0)
+    type_operation = models.CharField(choices=choix_operation.choices, max_length=200)
+    date_operation = models.DateTimeField('date encaissement')
+    
+    def __str__(self):
+        return "{}, {}, {}, {}".format(self.date_operation, self.type_operation, self.montant, self.operateur)
+
 #fin classes de la caisse
 
 
@@ -88,11 +96,12 @@ class Categorie(models.Model):
 
 class Article(models.Model):
     categorie = models.ForeignKey(Categorie, on_delete=models.CASCADE)
-    nom_article = models.CharField(max_length=200)
+    nom_article = models.CharField(max_length=200, unique=True)
     code_barres = models.CharField(max_length=200, blank=True, null=True, unique=True) #nouvo
     date_peremption = models.DateTimeField('date peremption', blank=True, null=True) #nouvo
     PAU = models.DecimalField(max_digits=19, decimal_places=2)
     PVU = models.DecimalField(max_digits=19, decimal_places=2)
+    PVG = models.DecimalField(max_digits=19, decimal_places=2, blank=True, null=True)
 
     def __str__(self):
         return self.nom_article
@@ -128,6 +137,7 @@ class Avarie(models.Model):
 class Sortie(models.Model):
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
     quantite = models.IntegerField(default=0)
+    prix_vente_article = models.DecimalField(max_digits=19, decimal_places=2)
     numero_vente = models.ForeignKey(Vente, on_delete=models.CASCADE)
 
     def __str__(self):

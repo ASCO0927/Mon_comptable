@@ -33,7 +33,9 @@
                         <th>Article</th>
                         <th>PAU</th>
                         <th>PVU</th>
-                        <th>Marge</th>
+                        <th>Marge Detail</th>
+                        <th>PVG</th>
+                        <th>Marge Gros</th>
                         <th>Code Barres</th>
                         <th>Action</th>
                     </tr>
@@ -46,6 +48,8 @@
                         <td>{{ article.PAU }}</td>
                         <td>{{ article.PVU }}</td>
                         <td>{{ article.PVU|sub:article.PAU }}</td>
+                        <td>{{ article.PVG }}</td>
+                        <td>{{ article.PVG|sub:article.PAU }}</td>
                         <td>{{ article.code_barres }}</td>
                         <td><a type="button" href="{% url 'pos:mod_article' user.id article.id %}" class="btn btn-primary">Modifier</a></td>
                     </tr>

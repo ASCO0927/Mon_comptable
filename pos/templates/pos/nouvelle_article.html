@@ -33,6 +33,7 @@
                     nom_article: $('#nom_article').val(),
                     PAU: $('#PAU').val(),
                     PVU: $('#PVU').val(),
+                    PVG: $('#PVG').val(),
                     qte: $('#qte').val(),
                     code_barres: $('#code_barres').val(),
                     date_peremption: $('#date_peremption').val(),
@@ -42,13 +43,14 @@
                         $('#nom_article').val('');
                         $('#PAU').val(0);
                         $('#PVU').val(0);
+                        $('#PVG').val(0);
                         $('#qte').val(0);
                         $('#code_barres').val('');
                         $('#date_peremption').val('');
                     });
                 },
                 error: function (response) {
-                    swal("Erreur!", "Une erreur s'est produite. Contactez le +22665136188 si l'erreur persiste!", "error");
+                    swal("Erreur!", "Une erreur s'est produite. \n "+response.responseJSON.message+"\n Contactez le +22665136188 si l'erreur persiste!", "error");
                 }
             });
         });
@@ -91,9 +93,15 @@
                 <input type="number" class="form-control" id="qte" step="1" value=0 min=0>
             </div>
             <div class="form-group">
-                <label for="exampleFormControlInput1">Prix De Vente Unitaire de l'article</label>
+                <label for="exampleFormControlInput1">Prix De Vente Unitaire de l'article au Detail</label>
                 <input type="number" class="form-control" id="PVU" step=".01" value=0>
             </div>
+
+            <div class="form-group">
+                <label for="exampleFormControlInput1">Prix De Vente Unitaire de l'article en Gros</label>
+                <input type="number" class="form-control" id="PVG" step=".01" value=0>
+            </div>
+
             <div class="form-group">
                 <label for="exampleFormControlInput1">Prix d'Achat Unitaire de l'article</label>
                 <input type="number" class="form-control" id="PAU" step=".01" value=0>

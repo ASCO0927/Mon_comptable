@@ -143,8 +143,8 @@
                                         <td>`+ element.PAU + `</td>
                                         <td>`+ element.PVU + `</td>
                                         <td>`+ element.quantite + `</td>
-                                        <td>`+ Number(element.PVU) * Number(element.quantite) + `</td>
-                                        <td>`+ element.quantite*(element.PVU-element.PAU)+ `</td>
+                                        <td>`+ element.montant_vente + `</td>
+                                        <td>`+ element.benefice+ `</td>
                                     </tr>`
                             }
                         });
@@ -166,14 +166,14 @@
                         let montant = 0;
                         response.art_vendus.forEach(element => {
                             if (element.categorie == ctg) {
-                                montant = montant + Number(element.PVU) * Number(element.quantite);
+                                montant = montant + Number(element.montant_vente);
                             }
                         });
                         $('#montant_total_' + ctg).html(`<div id="montant_total_` + ctg + `" class="row" style="margin-top: 8px; margin-left: 10px;  margin-bottom: 60px">Montant ` + ctg + ` : ` + montant + ` </div>`);
                     });
 
                     response.art_vendus.forEach(element => {
-                        montant_total = montant_total + Number(element.PVU) * Number(element.quantite);
+                        montant_total = montant_total + Number(element.montant_vente);
                     });
                     $('#montant_total').html(`<div id="montant_total" class="row" style="margin-top: 15px; margin-left: 10px;">Montant total : ` + montant_total + ` </div>`);
                     $('#benefice_periode').html(`<div id="montant_total" class="row" style="margin-top: 15px; margin-left: 10px;">Benefice sur la periode : ` + response.benefice_periode + ` </div>`);

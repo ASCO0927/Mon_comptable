@@ -5,14 +5,72 @@
 {% block script %}
 <script>
     let caisse;
+    let orange_money;
+    let ligne_selectionnee_pour_remise;
 
     function update_montant_caisse() {
         montant_caisse = caisse;
+        montant_orange_money = orange_money;
         
         $('#montant_caisse').html(montant_caisse);
+        $('#orange_money').html(orange_money);
     }
 
     $(document).ready(function () {
+
+        $('.form-check-input').change(function(){
+			selected_value = $("input[name='remiseRadios']:checked").val();
+            if (selected_value == "radio_prix_manuel") {
+                $('#pvu_remise').prop("disabled", false);
+            } else {
+                $('#pvu_remise').prop("disabled", true);
+            }
+        });
+
+        $('#panier tbody').on('click', '.remise', function () {
+            ligne_selectionnee_pour_remise = table_panier.row($(this).parents('tr')).data();
+            $('#modalRemise').modal();
+        });
+
+        $('#btn_valider_remise').on('click', function (e) {
+            var pvu_remise = 0;
+            selected_value = $("input[name='remiseRadios']:checked").val();
+            
+            if (selected_value == "radio_prix_manuel") {
+                pvu_remise = $('#pvu_remise').val();
+            } else if (selected_value == "radio_en_gros") {
+                
+                table_article.rows().every(function () {
+                    var d = this.data();
+                    if (d[0] == ligne_selectionnee_pour_remise[0]) {
+                        pvu_remise = d[3]; //PVU en gros
+                    }
+                });
+                
+            } else {
+                
+                table_article.rows().every(function () {
+                    var d = this.data();
+                    if (d[0] == ligne_selectionnee_pour_remise[0]) {
+                        pvu_remise = d[2]; //PVU au detail
+                    }
+                });
+
+            }
+
+            
+            table_panier.rows().every(function () {
+                var d = this.data();
+                if (d[0] == ligne_selectionnee_pour_remise[0]) {
+                    d[1] = pvu_remise;
+                    table_panier.row(this).data(d).draw();
+                }
+            });
+
+            update_montant();
+
+            $('#modalRemise').modal('hide')
+        });
 
         $('#select_client_id').select2({
             placeholder: "Choisir un client",
@@ -25,7 +83,7 @@
             url: "{% url 'pos:vente' user.id %}",
             success: function (response) {
                 caisse = response.caisse;
-                console.log(caisse);
+                orange_money = response.orange_money;
                 update_montant_caisse();
             },
             error: function (response) {
@@ -48,10 +106,8 @@
                 searchPlaceholder: "Recherche"
             }
         });
-        
-        //update_montant();
 
-        window['montant_panier'] = function() {
+        window['montant_panier'] = function () {
             montant = 0
             table_panier.rows().every(function () {
                 var prix = this.data()[1];
@@ -61,7 +117,7 @@
             return montant;
         }
 
-        window['monnaie_a_rendre'] = function() {
+        window['monnaie_a_rendre'] = function () {
             let encaissement_val = Number($('#encaissement_input_id').val());
             let montant = montant_panier();
             let monnaie = encaissement_val - Number(montant);
@@ -69,17 +125,16 @@
             return monnaie;
         }
 
-        window['update_montant'] = function() {
+        window['update_montant'] = function () {
             montant = montant_panier();
             let monnaie = monnaie_a_rendre();
 
-            console.log(montant);
             $('#montant_total').html(`<div id="montant_total" class="row" style="margin-top: 15px; margin-left: 10px;">TOTAL : ` + montant + ` FCFA </div>`);
 
             update_monnaie();
-            
+
         }
-        
+
         update_montant();
 
         function update_monnaie() {
@@ -91,12 +146,12 @@
             }
 
             $('#monnaie_id').replaceWith(`<input type="text" style="font-weight:bold" readonly class="form-control-plaintext" id="monnaie_id" value="MONNAIE: ` + monnaie + ` FCFA">`);
-            
+
         }
 
         $('#reinitialiser-button').on('click', function (e) {
             e.preventDefault();
-            
+
             $('#monnaie_id').replaceWith(`<input type="text" style="font-weight:bold" readonly class="form-control-plaintext" id="monnaie_id" value="MONNAIE: ` + 0 + ` FCFA">`);
             $('#encaissement_input_id').val(0);
 
@@ -104,13 +159,14 @@
 
         $('#bouton_vendre').on('click', function (e) {
             e.preventDefault();
-            
-            liste_articles_a_vendre = new Object();
+
+            liste_articles_a_vendre = [];
 
             table_panier.rows().every(function () {
                 var article = this.data()[0];
+                var prix = this.data()[1];
                 var quantite = this.data()[2];
-                liste_articles_a_vendre[article] = quantite;
+                liste_articles_a_vendre.push({"article":article, "quantite": quantite, "prix": prix});
             });
 
             $.ajax({
@@ -123,13 +179,24 @@
                     mode_paiement: $('#select_modepaiement_id').val()
                 },
                 success: function (response) {
-                    swal("Opération réussie!", "Vente enregistrée!", "success");
-                    caisse = response.caisse;
-                    console.log(caisse);
+                    swal("Opération réussie!", "Vente enregistrée!", "success", {
+                        buttons: {
+                            fermer: "Fermer",
+                            facture: {
+                                text: "Générer la facture",
+                                value: "facture"
+                            },
+                        }
+                    }).then((value) => {
+                        if(value == "facture"){
+                            printJS('/static/factures/facture.pdf');
+                        }
+                    });
 
-                    //printJS({ printable: 'panier', type: 'html', css: ['/static/pos/bootstrap-4.0.0-dist/css/bootstrap.min.css'] })
-            
-                    
+
+                    caisse = response.caisse;
+                    orange_money = response.orange_money;
+
                     update_montant_caisse();
                     table_panier.clear().draw();
                     $('#monnaie_id').replaceWith(`<input type="text" style="font-weight:bold" readonly class="form-control-plaintext" id="monnaie_id" value="MONNAIE: ` + 0 + ` FCFA">`);
@@ -153,55 +220,99 @@
 
         //ajouter un article dans le panier (AVEC SCANNER)
         //$('#code-barres').on('input', function(){
-        $('#code-barres').keypress(function(e){    
-            if (e.which == 13){
-            var index_col_code_barres = 3;
-            var code = $('#code-barres').val();
-            
-            //$('#code-barres').val('');
-            
-            var indexes = table_article.rows().indexes().filter( function ( value, index ) {
-                return code === table_article.row(value).data()[index_col_code_barres];
-            });
-            
-            var data = table_article.rows( indexes ).data().toArray();
-            
-            if (data.length == 1) {
-                var table_article_selected_row = data[0];
-            } else {
-                var table_article_selected_row = [];
-                $('#code-barres').val('');
-            }
-            
-            if (table_article_selected_row[1] > 0) {
+        $('#code-barres').keypress(function (e) {
+            if (e.which == 13) {
+                
+                var index_col_code_barres = 4;
+                var code = $('#code-barres').val();
+                //$('#code-barres').val('');
 
-                table_article_selected_row[1]--;
-                table_article.row(indexes).data(table_article_selected_row).draw();
-
-                var can_add_row = true;
-                table_panier.rows().every(function () {
-                    var d = this.data();
-                    if (d[0] == table_article_selected_row[0]) {
-                        d[2]++;
-                        table_panier.row(this).data(d).draw();
-                        can_add_row = false;
-                    }
+                var indexes = table_article.rows().indexes().filter(function (value, index) {
+                    return code == table_article.row(value).data()[index_col_code_barres];
                 });
-                if (can_add_row) {
-                    table_panier.row.add([table_article_selected_row[0], table_article_selected_row[2], 1, `
+                
+                var data = table_article.rows(indexes).data().toArray();
+
+                if (data.length == 1) {
+                    var table_article_selected_row = data[0];
+                } else {
+                    var table_article_selected_row = [];
+                    $('#code-barres').val('');
+                }
+
+                if (table_article_selected_row[1] > 0) {
+
+                    table_article_selected_row[1]--;
+                    table_article.row(indexes).data(table_article_selected_row).draw();
+
+                    var can_add_row = true;
+                    table_panier.rows().every(function () {
+                        var d = this.data();
+                        if (d[0] == table_article_selected_row[0]) {
+                            d[2]++;
+                            table_panier.row(this).data(d).draw();
+                            can_add_row = false;
+                        }
+                    });
+                    if (can_add_row) {
+                        table_panier.row.add([table_article_selected_row[0], table_article_selected_row[2], 1, `
                                             <div class="btn-group mr-2" role="group" aria-label="First group">
                                                 <button type="button" class="btn btn-secondary ajouter">+</button>
                                                 <button type="button" class="btn btn-secondary diminuer">-</button>
                                                 <button type="button" class="btn btn-secondary supprimer">x</button>
-                                            </div>`])
-                        .draw(false);
+                                            </div>
+                                            `])
+                            .draw(false);
+                    }
+
+                    update_montant();
+                    $('#code-barres').val('');
                 }
 
-                update_montant();
-                $('#code-barres').val('');
             }
+        });
 
-        }});
+        var cell;
+        $('#panier').on('click', 'tbody td', function() {
+            var idx = table_panier.cell( this ).index().column;
+            if (idx == 2) {
+                $('#modalCell').modal();
+                cell = table_panier.cell(this);
+                $("#qte_modal_cell").val(cell.data());
+            }
+        });
+        $('#btn_valider_qte_modal').on('click', function (e) {
+            let quantite_article = $("#qte_modal_cell").val();
+
+            let row = cell.index().row;
+            let selecteur_prod_panier = '#panier tbody tr:eq('+row+') td:eq(0)';
+            let nom_article_panier = $(selecteur_prod_panier).text();
+
+            let can_update_quantite = false;
+
+            table_article.rows().every(function () {
+                var d = this.data();
+                if (d[0] == nom_article_panier) {
+                    if (d[1] > 0) {
+                        nbr = Number(d[1]) - Number(quantite_article) + Number(cell.data());
+                        if (nbr >= 0) {
+                            d[1] = nbr;
+                            table_article.row(this).data(d).draw();
+                            can_update_quantite = true;
+                        }
+                    }
+                }
+                
+            });
+
+            if (can_update_quantite){
+                cell.data(quantite_article).draw();
+                update_montant();
+            }
+            
+            $('#modalCell').modal('hide');
+
+        });
 
         //ajouter un article dans le panier (sans scanner)
         $('#liste_articles tbody').on('click', 'tr', function () {
@@ -222,11 +333,12 @@
                     }
                 });
                 if (can_add_row) {
-                    table_panier.row.add([table_article_selected_row[0], table_article_selected_row[2], 1, `
+                    table_panier.row.add([table_article_selected_row[0], table_article_selected_row[2], 1 , `
                                             <div class="btn-group mr-2" role="group" aria-label="First group">
                                                 <button type="button" class="btn btn-secondary ajouter">+</button>
                                                 <button type="button" class="btn btn-secondary diminuer">-</button>
                                                 <button type="button" class="btn btn-secondary supprimer">x</button>
+                                                <button type="button" class="btn btn-secondary remise">R</button>
                                             </div>`])
                         .draw(false);
                 }
@@ -307,7 +419,7 @@
             table_article.rows().every(function () {
                 var d = this.data();
                 if (d[0] == table_panier_selected_row[0]) {
-                    d[1] = d[1] + table_panier_selected_row[2];
+                    d[1] = d[1] + Number(table_panier_selected_row[2]);
                     table_article.row(this).data(d).draw();
                 }
             });
@@ -324,13 +436,16 @@
 {% block main %}
 <div class="container-fluid" style="margin-top: 50px; margin-bottom: 100px;">
     <div class="row" style="margin-bottom: 1%;">
-            <div class="col-4">
-                <input type="text" class="form-control" id="code-barres" placeholder="code-barres">
-            </div>
+        <div class="col-4">
+            <input type="text" class="form-control" id="code-barres" placeholder="code-barres">
+        </div>
 
-            <div class="col-8">
-                <a class="btn btn-primary float-right" href="#">Caisse : <span id="montant_caisse"></span> FCFA</a>
-            </div>
+        <div class="col-6">
+            <a class="btn btn-success float-right" href="#">Caisse : <span id="montant_caisse"></span> FCFA</a>
+        </div>
+        <div class="col-2">
+            <a class="btn btn-warning float-right" href="#">Orange Money : <span id="orange_money"></span> FCFA</a>
+        </div>
     </div>
     <!--div class="row" style="margin-bottom: 1%;">
         <div class="col-12">
@@ -344,18 +459,26 @@
                     <tr>
                         <th>Article</th>
                         <th>Stock</th>
-                        <th>Prix</th>
+                        <th>Prix Detail</th>
+                        <th>Prix Gros</th>
                         <th>Code Barres</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for article in liste_articles_en_catalogue %}
-                    <tr>
-                        <td>{{ article.nom_article }}</td>
-                        <td>{{ article.en_stock }}</td>
-                        <td>{{ article.PVU }}</td>
-                        <td>{{ article.code_barres }}</td>
-                    </tr>
+                        {% if article.couleur == 'yellow' %}
+                        <tr id="article_row_id" style="background-color: yellow;">
+                        {% elif article.couleur == 'red' %}
+                        <tr id="article_row_id" style="background-color: red;">
+                        {% else %}
+                        <tr id="article_row_id">
+                        {% endif%}
+                            <td>{{ article.nom_article }}</td>
+                            <td>{{ article.en_stock }}</td>
+                            <td>{{ article.PVU }}</td>
+                            <td>{{ article.PVG }}</td>
+                            <td>{{ article.code_barres }}</td>
+                        </tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -412,7 +535,8 @@
                         <label for="select_modepaiement_id">Mode de paiement</label>
                         <select class="js-states form-control" id="select_modepaiement_id" name="modepaient">
                             <option value="liquide" selected>liquide</option>
-                            <option value="compte">compte</option>
+                            <option value="orange_money">orange money</option>
+                            <option value="compte">credit / avance</option>
                         </select>
                     </div>
                 </div>
@@ -425,16 +549,17 @@
                         <div class="col-8">
                             <form class="form-inline">
                                 <div class="form-group mx-sm-3 mb-2">
-                                    <label>Espèces</label> 
-                                    <input type="number" class="form-control" id="encaissement_input_id" min="0" >
+                                    <label>Espèces</label>
+                                    <input type="number" class="form-control" id="encaissement_input_id" min="0">
                                 </div>
-                                
+
                                 <div class="form-group mb-2">
-                                    <button class="btn btn-primary float-right" id="reinitialiser-button">Réinitiliser</button>
+                                    <button class="btn btn-primary float-right"
+                                        id="reinitialiser-button">Réinitiliser</button>
                                 </div>
                             </form>
-                            
-                            
+
+
                         </div>
                         <div class="col-4">
                             <form class="form-inline">
@@ -443,6 +568,83 @@
                                         id="monnaie_id" value="MONNAIE: 0 FCFA">
                                 </div>
                             </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal -->
+            <div class="modal fade" id="modalRemise" tabindex="-1" role="dialog"
+                aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLongTitle">Remise</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form>
+                                <fieldset>
+                                    <div class="form-group">
+
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="remiseRadios" id="radio_en_detail" value="radio_en_detail" checked>
+                                            <label class="form-check-label" for="radio_en_detail">
+                                                Garder le prix du DETAIL
+                                            </label>
+                                        </div>
+
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="remiseRadios" id="radio_en_gros" value="radio_en_gros">
+                                            <label class="form-check-label" for="radio_en_gros">
+                                                Utiliser le prix d'EN-GROS
+                                            </label>
+                                        </div>
+
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="remiseRadios" id="radio_prix_manuel" value="radio_prix_manuel">
+                                            <label class="form-check-label" for="radio_prix_manuel">
+                                                Entrer manuellement un prix de vente
+                                            </label>
+                                        </div>
+
+                                        <input type="number" id="pvu_remise" class="form-control" disabled min="0">
+                                    </div>
+                                </fieldset>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                            <button type="button" class="btn btn-primary" id="btn_valider_remise">Valider</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="modalCell" tabindex="-1" role="dialog"
+                aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLongTitle">Quantité</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form>
+                                <fieldset>
+                                    <div class="form-group">
+                                        <input type="number" id="qte_modal_cell" class="form-control" min="0">
+                                    </div>
+                                </fieldset>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                            <button type="button" class="btn btn-primary" id="btn_valider_qte_modal">Valider</button>
                         </div>
                     </div>
                 </div>

@@ -1,16 +1,22 @@
-from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
-from django.shortcuts import render
-from django.urls import reverse
-from django.contrib.auth import authenticate, login, logout
 import json
-#from .models import HistoriqueTransactionsClient, Client, Depot, Article, Vente, Sortie, Avarie, Entree, Controle, Categorie, Coupures, OperationsCaisse, Caisse
-from .models import *
-from django.utils import timezone
-from django.contrib.auth.models import Permission, User
-from django.core import serializers
+import logging
 from datetime import datetime
 
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.shortcuts import render
+from django.urls import reverse
+from django.utils import timezone
 
+from .models import (Article, Avarie, Caisse, Categorie, Client,
+                     CompteOrangeMoney, Controle, Depot, Entree,
+                     HistoriqueDepotRamassageCaisse,
+                     HistoriqueDepotRamassageCompteOrangeMoney,
+                     HistoriqueTransactionsClient, Sortie, Vente)
+from .recus import enregistrer_recu_type1, enregistrer_recu_type2
+
+#logging.basicConfig(filename="log.txt", encoding="utf-8", level=logging.DEBUG)
 
 def login_view(request):
     if request.method == 'POST':
@@ -23,6 +29,8 @@ def login_view(request):
         else:
             return HttpResponse('Erreur de connection')
     else:
+        if request.user.is_authenticated:
+            return HttpResponseRedirect(reverse('pos:vente', args=(request.user.id,)))
         return render(request, 'pos/login.html')
 
 
@@ -47,23 +55,40 @@ def le_point(request, user_id):
                 context = {'liste_controle': Controle.objects.all()}
                 return render(request, 'pos/le_point.html', context)
         elif request.is_ajax() and request.method == 'POST':
+            print('requete lancee')
             art_vendus = []
             controle = Controle(controleur=User.objects.get(id=user_id), date_debut=request.POST['debut'], date_fin=request.POST['fin'])
             controle.save()
 
             sorties = Sortie.objects.filter(numero_vente__date_vente__range=[controle.date_debut, controle.date_fin])
             for i, sortie in enumerate(sorties):
+                #if sortie.prix_vente_article == 0:
+                #    sortie.prix_vente_article = sortie.article.PVU
+                
                 unique = True
                 for j, a in enumerate(art_vendus):
                     if(a['nom_article'] == sortie.article.nom_article):
                         art_vendus[j]['quantite'] = art_vendus[j]['quantite'] + sortie.quantite
+                        art_vendus[j]['montant_vente'] = art_vendus[j]['montant_vente'] + (sortie.quantite * sortie.prix_vente_article)
+                        art_vendus[j]['benefice'] = art_vendus[j]['benefice'] + (sortie.quantite * sortie.prix_vente_article) - (sortie.quantite * sortie.article.PAU)
                         unique = False
                 if unique:
-                    art_vendus.append({'categorie': sortie.article.categorie.nom_categorie, 'nom_article': sortie.article.nom_article, 'PAU': sortie.article.PAU, 'PVU': sortie.article.PVU, 'quantite': sortie.quantite})
+                    art_vendus.append({
+                        'categorie': sortie.article.categorie.nom_categorie, 
+                        'nom_article': sortie.article.nom_article, 
+                        'PAU': sortie.article.PAU, 
+                        'PVU': sortie.article.PVU, 
+                        'quantite': sortie.quantite,
+                        'montant_vente': sortie.quantite * sortie.prix_vente_article,
+                        'benefice': (sortie.quantite * sortie.prix_vente_article) - (sortie.quantite * sortie.article.PAU)
+                        })
+
             
+
             benefice_periode = 0
             for vente in art_vendus:
-                benefice_periode += (vente['PVU']-vente['PAU'])*vente['quantite']
+                benefice_periode += vente['benefice']
+            
 
             return JsonResponse({'date_debut': controle.date_debut, 'date_fin': controle.date_fin, 'art_vendus': art_vendus, 'benefice_periode': benefice_periode}, status=200)
 
@@ -89,7 +114,7 @@ def nouveau_client(request):
             return render(request, 'pos/client/nouveau_client.html')
         else:
             if request.is_ajax():
-                client = Client(nom=request.POST['nom_client'], prenoms=request.POST['prenoms_client'], numero_cnib=request.POST['numero_cnib_client'])
+                client = Client(nom=request.POST['nom_client'].strip(), prenoms=request.POST['prenoms_client'].strip(), numero_cnib=request.POST['numero_cnib_client'])
                 client.save()
                 
                 return JsonResponse({'message': 'operation enregistrée avec succes'}, status=200)
@@ -102,7 +127,7 @@ def lst_transactions_client(request, client_id):
         if request.method == 'GET':
             client=Client.objects.get(pk = client_id)
             liste_depots_client = Depot.objects.filter(client = client)
-            liste_transactions_client = HistoriqueTransactionsClient.objects.filter(client = client)
+            #liste_transactions_client = HistoriqueTransactionsClient.objects.filter(client = client)
 
             liste_ventes_au_client = Vente.objects.filter(client = client)
 
@@ -162,8 +187,8 @@ def mod_client(request, client_id, *args, **kwargs):
             if request.is_ajax():
                 client=Client.objects.get(pk = client_id)
                 
-                client.nom = request.POST['nom_client']
-                client.prenoms = request.POST['prenoms_client']
+                client.nom = request.POST['nom_client'].strip()
+                client.prenoms = request.POST['prenoms_client'].strip()
                 client.numero_cnib = request.POST['numero_cnib_client']
                 client.save()
                                 
@@ -255,7 +280,7 @@ def collecte_caisse(request, user_id):
                     heure = hist.date_operation.strftime("%H:%M")
                     liste_dep_ram.append({'id': hist.id, 'jour': jour, 'heure': heure, 'type_operation': hist.type_operation, 'montant': hist.montant, 'operateur': hist.operateur.username})
                 liste_dep_ram.reverse()
-                
+
                 return render(request, 'pos/caisse/collecte_caisse.html', {'liste_dep_ram': liste_dep_ram})
 
 
@@ -296,12 +321,142 @@ def depot_petite_monnaie(request, user_id):
                 return render(request, 'pos/caisse/depot_petite_monnaie.html', {'liste_dep_ram': liste_dep_ram})
 ################FIN CAISSE#########################
 
+################ORANGE MONEY#########################
+def collecte_caisse_orange_money(request, user_id):
+    if not request.user.is_superuser:
+        logout(request)
+        return HttpResponseRedirect(reverse('pos:login'))
+    else:
+        compte_orange_money_list = CompteOrangeMoney.objects.all()
+        if len(compte_orange_money_list) == 0:
+            compte_orange_money = CompteOrangeMoney(montant=0)
+        else:
+            compte_orange_money = compte_orange_money_list[0]
+
+        if request.method == 'POST':
+            montant_decaissement = request.POST['montant_decaissement']
+            now = timezone.now()
+            
+            compte_orange_money.montant -= int(montant_decaissement)
+            compte_orange_money.save()
+            
+            hist_dep_ram = HistoriqueDepotRamassageCompteOrangeMoney(operateur=User.objects.get(id=user_id), montant=int(montant_decaissement), type_operation="ramassage", date_operation=now)
+            hist_dep_ram.save()
+
+            return JsonResponse({'message': 'operation enregistrée avec succes', 'orange_money': compte_orange_money.montant}, status=200)
+        else:
+            if request.is_ajax():
+                return JsonResponse({'message': 'operation enregistrée avec succes', 'orange_money': compte_orange_money.montant}, status=200)
+            else:
+
+                liste_dep_ram = []
+                for hist in HistoriqueDepotRamassageCompteOrangeMoney.objects.all():
+                    jour = hist.date_operation.strftime("%d/%m/%Y")
+                    heure = hist.date_operation.strftime("%H:%M")
+                    liste_dep_ram.append({'id': hist.id, 'jour': jour, 'heure': heure, 'type_operation': hist.type_operation, 'montant': hist.montant, 'operateur': hist.operateur.username})
+                liste_dep_ram.reverse()
+
+                return render(request, 'pos/caisse_orange_money/collecte_caisse_orange_money.html', {'liste_dep_ram': liste_dep_ram})
+
+
+def depot_caisse_orange_money(request, user_id):
+    if not request.user.is_superuser:
+        logout(request)
+        return HttpResponseRedirect(reverse('pos:login'))
+    else:
+        compte_orange_money_list = CompteOrangeMoney.objects.all()
+        if len(compte_orange_money_list) == 0:
+            compte_orange_money = CompteOrangeMoney(montant=0)
+        else:
+            compte_orange_money = compte_orange_money_list[0]
+
+        if request.method == 'POST':
+            montant_encaissement = request.POST['montant_encaissement']
+            now = timezone.now()
+            
+            compte_orange_money.montant += int(montant_encaissement)
+            compte_orange_money.save()
+
+            hist_dep_ram = HistoriqueDepotRamassageCompteOrangeMoney(operateur=User.objects.get(id=user_id), montant=int(montant_encaissement), type_operation="depot", date_operation=now)
+            hist_dep_ram.save()
+            
+            return JsonResponse({'message': 'operation enregistrée avec succes', 'orange_money': compte_orange_money.montant}, status=200)
+        else:
+            if request.is_ajax():
+                return JsonResponse({'message': 'operation enregistrée avec succes', 'orange_money': compte_orange_money.montant}, status=200)
+            else:
+
+                liste_dep_ram = []
+                for hist in HistoriqueDepotRamassageCompteOrangeMoney.objects.all():
+                    jour = hist.date_operation.strftime("%d/%m/%Y")
+                    heure = hist.date_operation.strftime("%H:%M")
+                    liste_dep_ram.append({'id': hist.id, 'jour': jour, 'heure': heure, 'type_operation': hist.type_operation, 'montant': hist.montant, 'operateur': hist.operateur.username})
+                liste_dep_ram.reverse()
+
+                return render(request, 'pos/caisse_orange_money/depot_caisse_orange_money.html', {'liste_dep_ram': liste_dep_ram})
+################FIN ORANGE MONEY#########################
+
+def annuler_vente(request, user_id):
+    if not request.user.is_authenticated:
+        return HttpResponseRedirect(reverse('pos:login'))
+    else:
+        if request.is_ajax() and request.method == 'POST':
+            montant_vente = 0
+
+            sorties = Sortie.objects.filter(numero_vente=int(request.POST['id']))
+            vente = Vente.objects.get(id=int(request.POST['id']))
+
+            for sortie in sorties:
+                montant_vente = montant_vente + sortie.article.PVU * sortie.quantite
+
+            #caisse
+            caisse_list = Caisse.objects.all()
+            if len(caisse_list) == 0:
+                caisse = Caisse(montant=0)
+            else:
+                caisse = caisse_list[0]
+            #orange money
+            compte_orange_money_list = CompteOrangeMoney.objects.all()
+            if len(compte_orange_money_list) == 0:
+                compte_orange_money = CompteOrangeMoney(montant=0)
+            else:
+                compte_orange_money = compte_orange_money_list[0]
+                
+                
+            hist_trans = HistoriqueTransactionsClient.objects.get(vente = vente)
+
+            if hist_trans.type_transaction == "compte":
+                client = Client.objects.get(id=hist_trans.client.id)
+                solde_avant = int(client.solde)
+                solde_apres = solde_avant + montant_vente
+                client.solde = solde_apres
+                client.save()
+            elif hist_trans.type_transaction == "liquide":
+                #maj caisse
+                caisse.montant -= montant_vente
+                caisse.save()
+            elif hist_trans.type_transaction == "orange_money":
+                #maj compte_orange_money
+                compte_orange_money.montant -= montant_vente
+                compte_orange_money.save()
+            
+            hist_trans.delete()
+
+            vente.delete()
+
+            
+
+            return JsonResponse({'message': 'operation enregistrée avec succes', 'caisse': caisse.montant, 'orange_money': compte_orange_money.montant}, status=200)
+
+
+
 def vente(request, user_id):
     if not request.user.is_authenticated:
         return HttpResponseRedirect(reverse('pos:login'))
     else:
         if request.method == 'POST':
             liste_articles_a_vendre = request.POST['liste_articles_a_vendre']
+
             
             if request.POST['client_id'] != '':
                 client = Client.objects.get(id=request.POST['client_id'])
@@ -309,17 +464,26 @@ def vente(request, user_id):
             mode_paiement = request.POST['mode_paiement']
             now = timezone.now()
 
+            #caisse
             caisse_list = Caisse.objects.all()
             if len(caisse_list) == 0:
                 caisse = Caisse(montant=0)
             else:
                 caisse = caisse_list[0]
             
+            #orange money
+            compte_orange_money_list = CompteOrangeMoney.objects.all()
+            if len(compte_orange_money_list) == 0:
+                compte_orange_money = CompteOrangeMoney(montant=0)
+            else:
+                compte_orange_money = compte_orange_money_list[0]
+            
             
             for article in json.loads(liste_articles_a_vendre):
-                article_a_vendre = Article.objects.get(nom_article = article)
-                quantite = json.loads(liste_articles_a_vendre)[article]
-                if quantite_en_stock(article_a_vendre) < quantite:
+                article_a_vendre = Article.objects.get(nom_article = article["article"])
+                quantite = article["quantite"]
+                #prix = article["prix"]
+                if quantite_en_stock(article_a_vendre) < int(quantite):
                     return HttpResponse('la vente a echouee. Stock de {} insuffisant.'.format(article))
 
             if request.POST['client_id'] != '':
@@ -330,14 +494,14 @@ def vente(request, user_id):
 
             montant_vente = 0
             for article in json.loads(liste_articles_a_vendre):
-                article_a_vendre = Article.objects.get(nom_article = article)
-                quantite_a_vendre = json.loads(liste_articles_a_vendre)[article]
-                prix_article = article_a_vendre.PVU
+                article_a_vendre = Article.objects.get(nom_article = article["article"])
+                quantite_a_vendre = article["quantite"]
+                prix_article = float(article["prix"])
 
-                montant_vente += quantite_a_vendre * prix_article
+                montant_vente += int(quantite_a_vendre) * prix_article
                 #caisse.montant += quantite_a_vendre * prix_article
 
-                sortie = Sortie(article=article_a_vendre, quantite=quantite_a_vendre, numero_vente=vente)
+                sortie = Sortie(article=article_a_vendre, quantite=quantite_a_vendre, prix_vente_article=float(prix_article), numero_vente=vente)
                 sortie.save()
 
             #maj solde
@@ -347,6 +511,13 @@ def vente(request, user_id):
                     solde_apres = solde_avant - montant_vente
                     client.solde = solde_apres
                     client.save()
+                elif mode_paiement == 'orange_money':
+                    solde_avant = int(client.solde)
+                    solde_apres = int(client.solde)
+
+                    #maj compte orange money
+                    compte_orange_money.montant += montant_vente
+                    compte_orange_money.save()
                 elif mode_paiement == 'liquide':
                     solde_avant = int(client.solde)
                     solde_apres = int(client.solde)
@@ -365,19 +536,37 @@ def vente(request, user_id):
             if request.POST['client_id'] != '':
                 hist_transac = HistoriqueTransactionsClient(client=client, montant = montant_vente, type_transaction=mode_paiement, vente=vente, solde_avant=solde_avant, solde_apres=solde_apres, date_transaction=datetime.now())
                 hist_transac.save()
+            
+            
+            #generation de la facture
+            type_recu = 1
+            if type_recu == 1:
+                enregistrer_recu_type1(liste_articles_a_vendre)
+            else:
+                enregistrer_recu_type2(liste_articles_a_vendre)
+            #fin facture
 
-            return JsonResponse({'message': 'operation enregistrée avec succes', 'caisse': caisse.montant}, status=200)
+            print(compte_orange_money.montant)
+            return JsonResponse({'message': 'operation enregistrée avec succes', 'caisse': caisse.montant, 'orange_money': compte_orange_money.montant}, status=200)
         else:
             if request.is_ajax():
                 
+                #caisse
                 caisse_list = Caisse.objects.all()
                 if len(caisse_list) == 0:
                     caisse = Caisse(montant=0)
                     caisse.save()
                 else:
                     caisse = caisse_list[0]
+                
+                #orange money
+                compte_orange_money_list = CompteOrangeMoney.objects.all()
+                if len(compte_orange_money_list) == 0:
+                    compte_orange_money = CompteOrangeMoney(montant=0)
+                else:
+                    compte_orange_money = compte_orange_money_list[0]
 
-                return JsonResponse({'message': 'operation enregistrée avec succes', 'caisse': caisse.montant}, status=200)
+                return JsonResponse({'message': 'operation enregistrée avec succes', 'caisse': caisse.montant, 'orange_money': compte_orange_money.montant}, status=200)
             else:
                 liste_articles_en_catalogue = catalogue_et_stock()
                 liste_clients = Client.objects.all()
@@ -408,8 +597,8 @@ def ctrl_vente(request, user_id):
                 vente = Vente.objects.get(id=request.POST['id'])
 
                 for sortie in sorties:
-                    liste_articles_vente.append({'nom_article': sortie.article.nom_article, 'prix': sortie.article.PVU, 'quantite': sortie.quantite})
-                    montant_vente = montant_vente + sortie.article.PVU * sortie.quantite
+                    liste_articles_vente.append({'nom_article': sortie.article.nom_article, 'prix': sortie.prix_vente_article, 'quantite': sortie.quantite})
+                    montant_vente = montant_vente + sortie.prix_vente_article * sortie.quantite
 
                 if vente.client:
                     return JsonResponse(
@@ -547,7 +736,7 @@ def nouvelle_categorie(request, user_id):
             return render(request, 'pos/nouvelle_categorie.html')
         else:
             if request.is_ajax():
-                categorie = Categorie(nom_categorie=request.POST['nom_categorie'])
+                categorie = Categorie(nom_categorie=request.POST['nom_categorie'].strip())
                 categorie.save()
                 return JsonResponse({'message': 'operation enregistrée avec succes'}, status=200)
 
@@ -562,40 +751,86 @@ def nouvelle_article(request, user_id):
             return render(request, 'pos/nouvelle_article.html', {'liste_categories': liste_categories})
         else:
             if request.is_ajax():
+                nom_article=request.POST['nom_article'].strip()
+
+                if 'PAU' in request.POST.keys() and request.POST['PAU']:
+                    try:
+                        PAU=float(request.POST['PAU'])
+                    except Exception as e:
+                        logging.exception("Le prix d'achat unitaire doit etre un nombre")
+                        return JsonResponse({'message': "Le prix d'achat unitaire doit etre un nombre"}, status=510)
+                else:
+                    logging.exception("Le champ PAU est obligatoire")
+                    print(request.POST['PAU'])
+                    return JsonResponse({'message': "Le champ PAU est obligatoire"}, status=510)
+                
+                if 'PVU' in request.POST.keys() and  request.POST['PVU']:
+                    try:
+                        PVU=float(request.POST['PVU'])
+                    except:
+                        logging.info("Le prix de vente unitaire doit etre un nombre")
+                        return JsonResponse({'message': "Le prix de vente unitaire doit etre un nombre"}, status=510)
+                else:
+                    logging.info("Le champ PVU est obligatoire")
+                    return JsonResponse({'message': "Le champ PVU est obligatoire"}, status=510)
+                
+                if 'PVG' in request.POST.keys() and  request.POST['PVG']:
+                    try:
+                        PVG=float(request.POST['PVG'])
+                    except Exception as e:
+                        print(e)
+                        return JsonResponse({'message': "Le prix de vente en gros doit etre un nombre"}, status=510)
+                else:
+                    logging.info("Le champ PVG est obligatoire")
+                    return JsonResponse({'message': "Le champ PVG est obligatoire"}, status=510)
+                
+                
+                if nom_article == '':
+                    print("Vous devez donner un nom à l'article")
+                    return JsonResponse({'message': "Vous devez donner un nom à l'article"}, status=510)
+                if Article.objects.filter(nom_article=nom_article).exists():
+                    print("Le nom de l'article doit etre unique")
+                    return JsonResponse({'message': "Le nom de l'article doit etre unique"}, status=510)
+                    
+                
                 
                 if request.POST['date_peremption'] == '' and request.POST['code_barres'] == '':
                     article = Article(
                         categorie=Categorie.objects.get(pk=request.POST['categorie_id']),
-                        nom_article=request.POST['nom_article'], 
-                        PAU=request.POST['PAU'], 
-                        PVU=request.POST['PVU']
+                        nom_article=request.POST['nom_article'].strip(), 
+                        PAU=PAU,
+                        PVU=PVU,
+                        PVG=PVG
                     )
                 elif request.POST['date_peremption'] != '' and request.POST['code_barres'] == '':
                     article = Article(
                         categorie=Categorie.objects.get(pk=request.POST['categorie_id']),
                         #code_barres=request.POST['code_barres'], 
                         date_peremption=request.POST['date_peremption'], 
-                        nom_article=request.POST['nom_article'], 
+                        nom_article=request.POST['nom_article'].strip(), 
                         PAU=request.POST['PAU'], 
                         PVU=request.POST['PVU'],
+                        PVG=request.POST['PVG']
                     )
                 elif request.POST['date_peremption'] == '' and request.POST['code_barres'] != '':
                     article = Article(
                         categorie=Categorie.objects.get(pk=request.POST['categorie_id']),
                         code_barres=request.POST['code_barres'], 
                         #date_peremption=request.POST['date_peremption'], 
-                        nom_article=request.POST['nom_article'], 
+                        nom_article=request.POST['nom_article'].strip(), 
                         PAU=request.POST['PAU'], 
                         PVU=request.POST['PVU'],
+                        PVG=request.POST['PVG']
                     )
                 elif request.POST['date_peremption'] != '' and request.POST['code_barres'] != '':
                     article = Article(
                         categorie=Categorie.objects.get(pk=request.POST['categorie_id']),
                         code_barres=request.POST['code_barres'], 
                         date_peremption=request.POST['date_peremption'], 
-                        nom_article=request.POST['nom_article'], 
+                        nom_article=request.POST['nom_article'].strip(), 
                         PAU=request.POST['PAU'], 
                         PVU=request.POST['PVU'],
+                        PVG=request.POST['PVG']
                     )
                 article.save()
 
@@ -623,9 +858,10 @@ def mod_article(request, user_id, article_id, *args, **kwargs):
                 article=Article.objects.get(pk = article_id)
                 
                 article.categorie = Categorie.objects.get(pk=request.POST['categorie_id'])
-                article.nom_article = request.POST['nom_article']
+                article.nom_article = request.POST['nom_article'].strip()
                 article.PAU = request.POST['PAU']
                 article.PVU = request.POST['PVU']
+                article.PVG = request.POST['PVG']
                 
                 if request.POST['date_peremption'] != '':
                     article.date_peremption = request.POST['date_peremption']
@@ -692,7 +928,7 @@ def mod_categorie(request, user_id, categorie_id):
             if request.is_ajax():
                 categorie=Categorie.objects.get(pk = categorie_id)
                 
-                categorie.nom_categorie = request.POST['nom_categorie']
+                categorie.nom_categorie = request.POST['nom_categorie'].strip()
                 
                 categorie.save()
                 return JsonResponse({'message': 'operation enregistrée avec succes'}, status=200)
@@ -732,8 +968,14 @@ def catalogue_et_stock():
             entree.save()
             id_derniere_entree = entree.id
 
+        en_stock = quantite_en_stock(article)
+        couleur = ""
+        if en_stock < 15 and en_stock != 0:
+            couleur = "yellow"
+        elif en_stock < 1:
+            couleur = "red"
 
-        liste_articles_en_catalogue.append({"id": article.id, "code_barres": article.code_barres, "date_peremption": article.date_peremption,  "categorie": article.categorie, "nom_article": article.nom_article, "PAU": article.PAU, "PVU": article.PVU, "en_stock": quantite_en_stock(article), "id_derniere_entree": id_derniere_entree})
+        liste_articles_en_catalogue.append({"id": article.id, "code_barres": article.code_barres, "date_peremption": article.date_peremption,  "categorie": article.categorie, "nom_article": article.nom_article, "PAU": article.PAU, "PVU": article.PVU, "PVG": article.PVG, "en_stock": en_stock, "id_derniere_entree": id_derniere_entree, "couleur": couleur,})
 
     return liste_articles_en_catalogue
         

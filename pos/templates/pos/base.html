@@ -38,7 +38,8 @@
 
     {% block navbar %}
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <a class="navbar-brand" href="#">Alimentation</a>
+        <!--a class="navbar-brand" href="#" class="pull-left"> <img width="100" height="80" src="{% static 'images/logo.png' %}"> </a-->
+        <a class="navbar-brand" href="#">ALPOS</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
             aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -79,6 +80,15 @@
                       <a class="dropdown-item" href="{% url 'pos:collecte_caisse' user.id %}">Ramassage</a>
                     </div>
                 </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      Orange Money
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                      <a class="dropdown-item" href="{% url 'pos:depot_caisse_orange_money' user.id %}">Dépot</a>
+                      <a class="dropdown-item" href="{% url 'pos:collecte_caisse_orange_money' user.id %}">Ramassage</a>
+                    </div>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'pos:liste_produits_avaries' user.id %}">Avarie</a>
                 </li>
@@ -93,7 +103,7 @@
         <a class="btn btn-outline-light my-2 my-sm-0" type="submit" href="{% url 'pos:logout' %}">Se déconnecter</a>
     </nav>
     {% endblock %}
-
+ 
     {% block main %}
     {% endblock %}
 
