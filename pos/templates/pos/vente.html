@@ -260,6 +260,7 @@
                                                 <button type="button" class="btn btn-secondary ajouter">+</button>
                                                 <button type="button" class="btn btn-secondary diminuer">-</button>
                                                 <button type="button" class="btn btn-secondary supprimer">x</button>
+                                                <button type="button" class="btn btn-secondary remise">R</button>
                                             </div>
                                             `])
                             .draw(false);
@@ -462,22 +463,34 @@
                         <th>Prix Detail</th>
                         <th>Prix Gros</th>
                         <th>Code Barres</th>
+                        <th>peremption</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for article in liste_articles_en_catalogue %}
-                        {% if article.couleur == 'yellow' %}
-                        <tr id="article_row_id" style="background-color: yellow;">
-                        {% elif article.couleur == 'red' %}
-                        <tr id="article_row_id" style="background-color: red;">
-                        {% else %}
-                        <tr id="article_row_id">
-                        {% endif%}
+                        <tr>
                             <td>{{ article.nom_article }}</td>
-                            <td>{{ article.en_stock }}</td>
+
+                            {% if article.couleur_stock == 'yellow' %}
+                            <td id="article_row_id" style="background-color: yellow;">{{ article.en_stock }}</td>
+                            {% elif article.couleur_stock == 'red' %}
+                            <td id="article_row_id" style="background-color: red;">{{ article.en_stock }}</td>
+                            {% else %}
+                            <td id="article_row_id">{{ article.en_stock }}</td>
+                            {% endif%}
+
                             <td>{{ article.PVU }}</td>
                             <td>{{ article.PVG }}</td>
                             <td>{{ article.code_barres }}</td>
+
+                            {% if article.couleur_date_peremption == 'orange' %}
+                            <td id="article_r" style="background-color: orange;">{{ article.date_peremption }}</td>
+                            {% elif article.couleur_date_peremption == 'red' %}
+                            <td id="article_r" style="background-color: red;">{{ article.date_peremption }}</td>
+                            {% else %}
+                            <td id="article_r">{{ article.date_peremption }}</td>
+                            {% endif%}
+                            
                         </tr>
                     {% endfor %}
                 </tbody>

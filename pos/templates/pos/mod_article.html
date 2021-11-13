@@ -11,6 +11,13 @@
 {% block script %}
 <script>
     $(document).ready(function () {
+        $(window).keydown(function(event){
+            if(event.keyCode == 13) {
+                event.preventDefault();
+                return false;
+            }
+        });
+        
         $('#select_categorie_id').select2({
             sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
         });

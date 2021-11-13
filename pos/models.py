@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
-
+import datetime
+from django.utils import timezone
 
 
 #classes du client
@@ -102,6 +103,21 @@ class Article(models.Model):
     PAU = models.DecimalField(max_digits=19, decimal_places=2)
     PVU = models.DecimalField(max_digits=19, decimal_places=2)
     PVG = models.DecimalField(max_digits=19, decimal_places=2, blank=True, null=True)
+
+    def perime_dans_moins_de(self, jours):
+        try:
+            print("perime_dans_moins_de")
+            print(self.date_peremption <= timezone.now() + datetime.timedelta(days=jours))
+            print("perime_dans_moins_de\n\n")
+            return self.date_peremption <= timezone.now() + datetime.timedelta(days=jours)
+        except:
+            return False
+    
+    def article_est_perime(self):
+        try:
+            return self.date_peremption <= timezone.now()
+        except:
+            return False
 
     def __str__(self):
         return self.nom_article

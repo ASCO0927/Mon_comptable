@@ -969,13 +969,19 @@ def catalogue_et_stock():
             id_derniere_entree = entree.id
 
         en_stock = quantite_en_stock(article)
-        couleur = ""
+        couleur_stock = ""
         if en_stock < 15 and en_stock != 0:
-            couleur = "yellow"
+            couleur_stock = "yellow"
         elif en_stock < 1:
-            couleur = "red"
+            couleur_stock = "red"
+        
+        couleur_date_peremption = ""
+        if article.article_est_perime():
+            couleur_date_peremption = "red"
+        elif article.perime_dans_moins_de(30*3):
+            couleur_date_peremption = "orange"
 
-        liste_articles_en_catalogue.append({"id": article.id, "code_barres": article.code_barres, "date_peremption": article.date_peremption,  "categorie": article.categorie, "nom_article": article.nom_article, "PAU": article.PAU, "PVU": article.PVU, "PVG": article.PVG, "en_stock": en_stock, "id_derniere_entree": id_derniere_entree, "couleur": couleur,})
+        liste_articles_en_catalogue.append({"id": article.id, "code_barres": article.code_barres, "categorie": article.categorie, "nom_article": article.nom_article, "PAU": article.PAU, "PVU": article.PVU, "PVG": article.PVG, "en_stock": en_stock, "id_derniere_entree": id_derniere_entree, "couleur_stock": couleur_stock, "couleur_date_peremption": couleur_date_peremption, "date_peremption": article.date_peremption,})
 
     return liste_articles_en_catalogue
         
