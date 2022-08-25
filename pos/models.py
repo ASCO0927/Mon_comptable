@@ -4,6 +4,15 @@ import datetime
 from django.utils import timezone
 
 
+class Fournisseur(models.Model):
+    fournisseur = models.CharField(max_length=200)
+    tel = models.CharField(max_length=200)
+    solde = models.IntegerField(default=0)
+
+    def __str__(self):
+        return "{}, solde: {}".format(self.fournisseur, self.solde)
+
+
 #classes du client
 class Client(models.Model):
     nom = models.CharField(max_length=200)
@@ -106,9 +115,7 @@ class Article(models.Model):
 
     def perime_dans_moins_de(self, jours):
         try:
-            print("perime_dans_moins_de")
             print(self.date_peremption <= timezone.now() + datetime.timedelta(days=jours))
-            print("perime_dans_moins_de\n\n")
             return self.date_peremption <= timezone.now() + datetime.timedelta(days=jours)
         except:
             return False
@@ -153,7 +160,7 @@ class Avarie(models.Model):
 class Sortie(models.Model):
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
     quantite = models.IntegerField(default=0)
-    prix_vente_article = models.DecimalField(max_digits=19, decimal_places=2)
+    prix_vente_article = models.DecimalField(max_digits=19, decimal_places=2, default=0)
     numero_vente = models.ForeignKey(Vente, on_delete=models.CASCADE)
 
     def __str__(self):

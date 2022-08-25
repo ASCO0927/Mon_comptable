@@ -18,6 +18,8 @@
         });
 
         $("#enregister").on('click', function (e) {
+            $('#enregister').attr('disabled', true);
+
             e.preventDefault();
             $.ajax({
                 type: 'POST',

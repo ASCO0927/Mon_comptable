@@ -24,6 +24,8 @@
 
         $("#enregister").on('click', function (e) {
             e.preventDefault();
+            $('#enregister').attr('disabled', true);
+
             $.ajax({
                 type: 'POST',
                 url: "{% url 'pos:nouvelle_article' user.id %}",
@@ -48,9 +50,11 @@
                         $('#code_barres').val('');
                         $('#date_peremption').val('');
                     });
+                    $('#enregister').attr('disabled', false);
                 },
                 error: function (response) {
                     swal("Erreur!", "Une erreur s'est produite. \n "+response.responseJSON.message+"\n Contactez le +22665136188 si l'erreur persiste!", "error");
+                    $('#enregister').attr('disabled', false);
                 }
             });
         });

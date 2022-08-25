@@ -1,5 +1,6 @@
 from django.urls import path
-from . import views
+from .views import views
+from django.views.generic.base import RedirectView
 
 '''
 from django.utils import timezone
@@ -95,6 +96,12 @@ sortie_creation()
 
 app_name = 'pos'
 urlpatterns = [
+    path('', RedirectView.as_view(url='login/')),
+
+    path('<int:user_id>/generer_proforma/', views.generer_proforma, name='generer_proforma'),
+    path('<int:user_id>/modifier_vente/', views.modifier_vente, name='modifier_vente'),
+
+
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('<int:user_id>/vente/', views.vente, name='vente'),

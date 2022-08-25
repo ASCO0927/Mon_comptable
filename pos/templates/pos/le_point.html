@@ -18,6 +18,15 @@
 
 {% block script %}
 <script>
+    function arrondir_montants(nombre){
+        mod = nombre%25;
+        if (mod != 0) {
+            return nombre - mod;
+        } else {
+            return nombre;
+        }
+    }
+    
     $(document).ready(function () {
         let start_date;
         let end_date;

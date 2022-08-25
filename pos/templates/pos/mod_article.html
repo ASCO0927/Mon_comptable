@@ -24,6 +24,7 @@
 
         $("#enregister").on('click', function (e) {
             e.preventDefault();
+            $('#enregister').attr('disabled', true);
             $.ajax({
                 type: 'POST',
                 url: "{% url 'pos:mod_article' user.id article.id %}",
