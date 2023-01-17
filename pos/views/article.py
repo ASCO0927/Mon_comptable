@@ -144,7 +144,7 @@ def sup_article(request, user_id, article_id):
         logout(request)
         return HttpResponseRedirect(reverse('pos:login'))
     else:
-        if request.is_ajax() and request.method == 'GET':
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest' and request.method == 'GET':
             article=Article.objects.get(pk = article_id)
             article.delete()
             return JsonResponse({'message': 'operation enregistrée avec succes'}, status=200)

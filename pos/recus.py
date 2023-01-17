@@ -18,10 +18,10 @@ styles = getSampleStyleSheet()
 styles["BodyText"].fontSize = 17 #taillle caractère elements du tableau
 styleN = styles["BodyText"]
 
-entreprise = "Blanche Market"
-tel1 = "+22657840707"
-tel2 = "+22673310870"
-tel3 = "+22678540156"
+entreprise = "Clinique Dentaire"
+tel1 = "+22674295649"
+tel2 = ""
+tel3 = ""
 tel4 = ""
 mail = ""
 
@@ -101,7 +101,7 @@ def enregistrer_proforma(liste_articles_a_vendre, client, objet_facture):
     canvas.setFont('Helvetica', 13)
     canvas.drawString(x, y, f"Objet: {objet_facture}")
 
-    data = [['Article', 'Quantite', 'Prix Unitaire', 'Sous Total']]
+    data = [['Désignation', 'Quantite', 'Prix Unitaire', 'Montant']]
     st = 0
     total = 0
     for article in json.loads(liste_articles_a_vendre):
@@ -314,7 +314,7 @@ def enregistrer_recu_type2(liste_articles_a_vendre, montant_encaisse, monnaie_re
     canvas.drawString(x, y, f"Date: {date_fr} {heure}")
 
     # tableau
-    data = [['Articles', 'Qte', 'PU', 'ST']]
+    data = [['Désignation', 'Qte', 'PU', 'Montant']]
     st = 0
     total = 0
     data.append([])#saut de ligne apres les entetes du tableau sur le recu
@@ -373,10 +373,10 @@ def enregistrer_recu_type2(liste_articles_a_vendre, montant_encaisse, monnaie_re
     x = 200
     y = y-20
     canvas.drawString(x, y, f"{mail}")
-    x = 60
+    x = 250
     y = y-20
     #canvas.drawString(x, y, f"(+226) {tel1} / {tel2} / {tel3}")
-    canvas.drawString(x, y, f" {tel1} / {tel2} / {tel3}")
+    canvas.drawString(x, y, f" {tel1}")
 
     canvas.showPage()
     canvas.save()

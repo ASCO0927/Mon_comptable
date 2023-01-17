@@ -41,7 +41,7 @@ def sup_categorie(request, user_id, categorie_id):
         logout(request)
         return HttpResponseRedirect(reverse('pos:login'))
     else:
-        if request.is_ajax() and request.method == 'GET':
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest' and request.method == 'GET':
             categorie=Categorie.objects.get(pk = categorie_id)
             categorie.delete()
             return JsonResponse({'message': 'operation enregistrée avec succes'}, status=200)

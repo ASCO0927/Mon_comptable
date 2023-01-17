@@ -23,7 +23,7 @@ def nouveau_fournisseur(request):
         if request.method == 'GET':
             return render(request, 'pos/fournisseur/nouveau_fournisseur.html')
         else:
-            if request.is_ajax():
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 client = Client(nom=request.POST['nom_client'].strip(), prenoms=request.POST['prenoms_client'].strip(), numero_cnib=request.POST['numero_cnib_client'])
                 client.save()
                 
@@ -94,7 +94,7 @@ def mod_client(request, client_id, *args, **kwargs):
             client=Client.objects.get(pk = client_id)
             return render(request, 'pos/client/modifier_client.html', {'client': client})
         else:
-            if request.is_ajax():
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 client=Client.objects.get(pk = client_id)
                 
                 client.nom = request.POST['nom_client'].strip()
@@ -110,7 +110,7 @@ def sup_client(request, client_id):
         logout(request)
         return HttpResponseRedirect(reverse('pos:login'))
     else:
-        if request.is_ajax() and request.method == 'GET':
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest' and request.method == 'GET':
             client=Client.objects.get(pk = client_id)
             client.delete()
             return JsonResponse({'message': 'operation enregistrée avec succes'}, status=200)
@@ -125,7 +125,7 @@ def depot_client(request, client_id):
             client=Client.objects.get(pk = client_id)
             return render(request, 'pos/client/depot_client.html', {"client": client})
         else:
-            if request.is_ajax() and request.method == 'POST':
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' and request.method == 'POST':
                 
                 montant_depot = int(request.POST['montant'])
 

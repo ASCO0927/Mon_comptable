@@ -116,7 +116,7 @@ def sup_client(request, client_id):
         logout(request)
         return HttpResponseRedirect(reverse('pos:login'))
     else:
-        if request.is_ajax() and request.method == 'GET':
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest' and request.method == 'GET':
             client=Client.objects.get(pk = client_id)
             client.delete()
             return JsonResponse({'message': 'operation enregistrée avec succes'}, status=200)
@@ -131,7 +131,7 @@ def depot_client(request, client_id):
             client=Client.objects.get(pk = client_id)
             return render(request, 'pos/client/depot_client.html', {"client": client})
         else:
-            if request.is_ajax() and request.method == 'POST':
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' and request.method == 'POST':
                 
                 montant_depot = int(request.POST['montant'])
 

@@ -69,7 +69,7 @@ def sup_entree(request, user_id, entree_id):
         logout(request)
         return HttpResponseRedirect(reverse('pos:login'))
     else:
-        if request.is_ajax() and request.method == 'GET':
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest' and request.method == 'GET':
             entree=Entree.objects.get(pk = entree_id)
             entree.delete()
             return JsonResponse({'message': 'operation enregistrée avec succes'}, status=200)

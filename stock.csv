@@ -1,0 +1,6 @@
+id,code_barres,categorie,nom_article,PAU,PVU,PVG,en_stock,id_derniere_entree,couleur_stock,couleur_date_peremption,date_peremption
+1,,LAIT,NIDO,1500.00,2000.00,1800.00,94,1,,,2023-07-01 00:00:00+00:00
+2,,LAIT,LAITY,500.00,1000.00,800.00,31,2,,,2023-09-23 00:00:00+00:00
+3,,POMMADE,DAYBYDAY,750.00,1200.00,1100.00,56,3,,,2023-06-30 00:00:00+00:00
+4,,LAIT,LIPTON,500.00,1000.00,900.00,41,4,,orange,2023-02-25 00:00:00+00:00
+5,6046000002907,LAIT,JADIDA,900.00,1200.00,1100.00,11,5,yellow,,

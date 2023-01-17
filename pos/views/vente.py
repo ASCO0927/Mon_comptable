@@ -42,8 +42,13 @@ def _procedure_annulation_vente(id_vente):
     else:
         compte_orange_money = compte_orange_money_list[0]
                 
-                
-    hist_trans = HistoriqueTransactionsClient.objects.get(vente = vente)
+    try:
+        hist_trans = HistoriqueTransactionsClient.objects.get(vente = vente)
+    except HistoriqueTransactionsClient.DoesNotExist:
+        hist_trans = None
+    
+    if hist_trans is None:
+        raise Exception("HistoriqueTransactionsClient.DoesNotExist")
 
     if hist_trans.type_transaction == "compte":
         client = Client.objects.get(id=hist_trans.client.id)
@@ -204,7 +209,7 @@ def vente(request, user_id):
                 hist_transac.save()
 
             #generation de la facture
-            type_recu = 2
+            type_recu = 1
             if type_recu == 1:
                 enregistrer_recu_type1(liste_articles_a_vendre, client)
             else:

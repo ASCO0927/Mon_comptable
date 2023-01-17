@@ -94,7 +94,7 @@ def le_point(request, user_id):
             else:
                 context = {'liste_controle': Controle.objects.all()}
                 return render(request, 'pos/le_point.html', context)
-        elif request.is_ajax() and request.method == 'POST':
+        elif request.headers.get('x-requested-with') == 'XMLHttpRequest' and request.method == 'POST':
             print('requete lancee')
             art_vendus = []
             controle = Controle(controleur=User.objects.get(id=user_id), date_debut=request.POST['debut'], date_fin=request.POST['fin'])
