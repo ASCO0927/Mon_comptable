@@ -18,15 +18,140 @@ styles = getSampleStyleSheet()
 styles["BodyText"].fontSize = 17 #taillle caractère elements du tableau
 styleN = styles["BodyText"]
 
-entreprise = "Clinique Dentaire"
-tel1 = "+22674295649"
-tel2 = ""
-tel3 = ""
+entreprise = "ETS SANKARA ET FRERES"
+tel1 = "+22675223353"
+tel2 = "+22675895609"
+tel3 = "+22678518571"
 tel4 = ""
 mail = ""
 
 ville = "Bobo-Dioulasso"
 pays = "Burkina-Faso"
+
+def recu_paiment_avance(liste_articles_a_vendre, client):
+    draw_backgroung_image = False
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    logo_path = os.path.join(BASE_DIR, 'pos', 'static', 'images', 'logo.png')
+    backgroung_image_path = os.path.join(BASE_DIR, 'pos', 'static', 'images', 'bg.png')
+    facture_path = os.path.join(BASE_DIR, 'pos', 'static', 'factures', 'facture.pdf')
+    logo = ImageReader(logo_path)
+    backgroung_image = ImageReader(backgroung_image_path)
+    
+    canvas = Canvas(facture_path)
+    d = str(datetime.now())
+    d = d.split(" ")[0]
+    annee = d.split("-")[0]
+    mois = d.split("-")[1]
+    jour = d.split("-")[2]
+    date_fr = "{}/{}/{}".format(jour, mois, annee)
+    if draw_backgroung_image:
+        canvas.drawImage(backgroung_image, 0, 0, width=letter[0], height=letter[1]+100, mask="auto")
+    #.drawImage(logo, 70, 710, width=100, height=100, mask='auto')
+    canvas.setFont('Helvetica', 13)
+    x = letter[0]-70-100-5
+    y = 800
+    canvas.drawString(x, y, f"Date: {date_fr}")
+    canvas.setFont('Helvetica-Bold', 15)
+    x = 200
+    y = 790  # 777
+    canvas.drawString(x, y, f"{entreprise}")
+    x = letter[0]-70-100-29
+    y = 777-20+10
+    canvas.setFont('Helvetica', 13)
+    #canvas.drawString(x, y, f"Ville: {ville}")
+    x = letter[0]-70-100-20
+    y = y-18
+    #canvas.drawString(x, y, f"Pays: {pays}")
+    x = letter[0]-70-100-20
+    y = y-18
+    #canvas.drawString(x, y, f"Tel: {tel1}")
+    y = y-18
+    #canvas.drawString(x, y, f"Tel: {tel2}")
+    x_desc = 230
+    y_desc = 767
+    canvas.setFont('Helvetica', 10)
+    canvas.drawString(x_desc, y_desc, f"Vente de marchandises divers")
+    x_desc = 200
+    y_desc = 753
+    canvas.drawString(x_desc, y_desc, f"Sis à Bobo-Dioulasso face Immeuble Kadhafi")
+    '''
+    x_desc = 200
+    y_desc = y_desc-13
+    canvas.drawString(x_desc, y_desc, f"Ingénieurs conseils, etc...")
+    '''
+    canvas.setFont('Helvetica-Bold', 20)
+    x = 70
+    y = y-30
+    canvas.drawString(x, y, "RECU DE VERSEMENT")
+    data = [['Désignation', 'Quantite', 'Prix Unitaire', 'Montant']]
+    st = 0
+    total = 0
+    for article in json.loads(liste_articles_a_vendre):
+        st = int(article["quantite"])*float(article["prix"])
+        total = total + st
+        data.append([article["article"], article["quantite"],
+                     float(article["prix"]), st])
+    table = Table(data, colWidths='*')
+    table.setStyle(
+        TableStyle(
+            [
+                ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),
+                ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.black),
+                ('BOX', (0, 0), (-1, -1), 0.25, colors.black),
+            ]
+        )
+    )
+    x = 70
+    y = y-20*len(data)-50
+    table.wrapOn(canvas, letter[0]-150, letter[1])
+    table.drawOn(canvas, x, y)
+    x = letter[0]-70-100-5
+    y = y-20
+    canvas.setFont('Helvetica', 13)
+    canvas.drawString(x, y, f"Total: {total} fcfa")
+    
+    
+    x = 70
+    y = y-40
+    canvas.setFont('Helvetica', 10)
+    canvas.drawString(x, y, "Le Client")
+    #canvas.line(x, y-5, x+90, y-5)
+    y = y-20
+    canvas.setFont('Helvetica', 13)
+    if client.nom != 'default':
+        canvas.drawString(x, y, f'{client.prenoms} {client.nom}')
+    else:
+        canvas.drawString(x, y, f'défaut')
+     
+    
+    x = letter[0]-70-100-5
+    y = y+20
+    canvas.setFont('Helvetica', 10)
+    canvas.drawString(x, y, "Le Vendeur")
+    #canvas.line(x, y-5, x+90, y-5)
+    '''
+    y = y-20
+    canvas.setFont('Helvetica', 13)
+    canvas.drawString(x, y, f'AMADOU SAMA')
+    '''
+    
+    canvas.setFont('Helvetica', 20)
+    x = 200
+    y = y-100
+    canvas.drawString(x, y, f"Merci et à bientôt")
+    
+    x = 70
+    y = 30
+    canvas.line(x, y, x+letter[0]-150, y)
+    canvas.setFont('Helvetica', 10)
+    x = 140
+    y = y-20
+    #canvas.drawString(x, y, f'RC : BF BBD 2016 A 0958    -   IFU : 00077127N   -   COMPTE ECOBANK N°170401709001')
+    canvas.drawString(x, y, f'{tel1}         -         {tel2}         -         {tel3}')
+
+    canvas.showPage()
+    canvas.save()
+
 
 def enregistrer_proforma(liste_articles_a_vendre, client, objet_facture):
     draw_backgroung_image = False
@@ -175,7 +300,7 @@ def enregistrer_recu_type1(liste_articles_a_vendre, client):
     date_fr = "{}/{}/{}".format(jour, mois, annee)
     if draw_backgroung_image:
         canvas.drawImage(backgroung_image, 0, 0, width=letter[0], height=letter[1]+100, mask="auto")
-    canvas.drawImage(logo, 70, 710, width=100, height=100, mask='auto')
+    #.drawImage(logo, 70, 710, width=100, height=100, mask='auto')
     canvas.setFont('Helvetica', 13)
     x = letter[0]-70-100-5
     y = 800
@@ -187,23 +312,23 @@ def enregistrer_recu_type1(liste_articles_a_vendre, client):
     x = letter[0]-70-100-29
     y = 777-20+10
     canvas.setFont('Helvetica', 13)
-    canvas.drawString(x, y, f"Ville: {ville}")
+    #canvas.drawString(x, y, f"Ville: {ville}")
     x = letter[0]-70-100-20
     y = y-18
-    canvas.drawString(x, y, f"Pays: {pays}")
+    #canvas.drawString(x, y, f"Pays: {pays}")
     x = letter[0]-70-100-20
     y = y-18
-    canvas.drawString(x, y, f"Tel: {tel1}")
+    #canvas.drawString(x, y, f"Tel: {tel1}")
     y = y-18
-    canvas.drawString(x, y, f"Tel: {tel2}")
-    x_desc = 200
+    #canvas.drawString(x, y, f"Tel: {tel2}")
+    x_desc = 230
     y_desc = 767
     canvas.setFont('Helvetica', 10)
-    canvas.drawString(x_desc, y_desc, f"Vente d'appareils électroménagers")
-    '''
-    x_desc = 230
+    canvas.drawString(x_desc, y_desc, f"Vente de marchandises divers")
+    x_desc = 200
     y_desc = 753
-    canvas.drawString(x_desc, y_desc, f"du Burkina-Faso")
+    canvas.drawString(x_desc, y_desc, f"Sis à Bobo-Dioulasso face Immeuble Kadhafi")
+    '''
     x_desc = 200
     y_desc = y_desc-13
     canvas.drawString(x_desc, y_desc, f"Ingénieurs conseils, etc...")
@@ -212,7 +337,7 @@ def enregistrer_recu_type1(liste_articles_a_vendre, client):
     x = 70
     y = y-30
     canvas.drawString(x, y, "FACTURE")
-    data = [['Article', 'Quantite', 'Prix Unitaire', 'Sous Total']]
+    data = [['Désignation', 'Quantite', 'Prix Unitaire', 'Montant']]
     st = 0
     total = 0
     for article in json.loads(liste_articles_a_vendre):
@@ -249,7 +374,9 @@ def enregistrer_recu_type1(liste_articles_a_vendre, client):
     canvas.setFont('Helvetica', 13)
     if client.nom != 'default':
         canvas.drawString(x, y, f'{client.prenoms} {client.nom}')
-    
+    else:
+        canvas.drawString(x, y, f'défaut')
+     
     
     x = letter[0]-70-100-5
     y = y+20
@@ -271,9 +398,11 @@ def enregistrer_recu_type1(liste_articles_a_vendre, client):
     y = 30
     canvas.line(x, y, x+letter[0]-150, y)
     canvas.setFont('Helvetica', 10)
-    x = 90
+    x = 140
     y = y-20
     #canvas.drawString(x, y, f'RC : BF BBD 2016 A 0958    -   IFU : 00077127N   -   COMPTE ECOBANK N°170401709001')
+    canvas.drawString(x, y, f'{tel1}         -         {tel2}         -         {tel3}')
+
     canvas.showPage()
     canvas.save()
 
@@ -380,3 +509,127 @@ def enregistrer_recu_type2(liste_articles_a_vendre, montant_encaisse, monnaie_re
 
     canvas.showPage()
     canvas.save()
+
+
+""" avec FORMAT A4 LOGO
+def enregistrer_recu_type1(liste_articles_a_vendre, client):
+    draw_backgroung_image = False
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    logo_path = os.path.join(BASE_DIR, 'pos', 'static', 'images', 'logo.png')
+    backgroung_image_path = os.path.join(BASE_DIR, 'pos', 'static', 'images', 'bg.png')
+    facture_path = os.path.join(BASE_DIR, 'pos', 'static', 'factures', 'facture.pdf')
+    logo = ImageReader(logo_path)
+    backgroung_image = ImageReader(backgroung_image_path)
+    
+    canvas = Canvas(facture_path)
+    d = str(datetime.now())
+    d = d.split(" ")[0]
+    annee = d.split("-")[0]
+    mois = d.split("-")[1]
+    jour = d.split("-")[2]
+    date_fr = "{}/{}/{}".format(jour, mois, annee)
+    if draw_backgroung_image:
+        canvas.drawImage(backgroung_image, 0, 0, width=letter[0], height=letter[1]+100, mask="auto")
+    canvas.drawImage(logo, 70, 710, width=100, height=100, mask='auto')
+    canvas.setFont('Helvetica', 13)
+    x = letter[0]-70-100-5
+    y = 800
+    canvas.drawString(x, y, f"Date: {date_fr}")
+    canvas.setFont('Helvetica-Bold', 15)
+    x = 200
+    y = 790  # 777
+    canvas.drawString(x, y, f"{entreprise}")
+    x = letter[0]-70-100-29
+    y = 777-20+10
+    canvas.setFont('Helvetica', 13)
+    canvas.drawString(x, y, f"Ville: {ville}")
+    x = letter[0]-70-100-20
+    y = y-18
+    canvas.drawString(x, y, f"Pays: {pays}")
+    x = letter[0]-70-100-20
+    y = y-18
+    canvas.drawString(x, y, f"Tel: {tel1}")
+    y = y-18
+    canvas.drawString(x, y, f"Tel: {tel2}")
+    x_desc = 200
+    y_desc = 767
+    canvas.setFont('Helvetica', 10)
+    canvas.drawString(x_desc, y_desc, f"Vente d'appareils électroménagers")
+    '''
+    x_desc = 230
+    y_desc = 753
+    canvas.drawString(x_desc, y_desc, f"du Burkina-Faso")
+    x_desc = 200
+    y_desc = y_desc-13
+    canvas.drawString(x_desc, y_desc, f"Ingénieurs conseils, etc...")
+    '''
+    canvas.setFont('Helvetica-Bold', 20)
+    x = 70
+    y = y-30
+    canvas.drawString(x, y, "FACTURE")
+    data = [['Désignation', 'Quantite', 'Prix Unitaire', 'Montant']]
+    st = 0
+    total = 0
+    for article in json.loads(liste_articles_a_vendre):
+        st = int(article["quantite"])*float(article["prix"])
+        total = total + st
+        data.append([article["article"], article["quantite"],
+                     float(article["prix"]), st])
+    table = Table(data, colWidths='*')
+    table.setStyle(
+        TableStyle(
+            [
+                ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),
+                ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.black),
+                ('BOX', (0, 0), (-1, -1), 0.25, colors.black),
+            ]
+        )
+    )
+    x = 70
+    y = y-20*len(data)-50
+    table.wrapOn(canvas, letter[0]-150, letter[1])
+    table.drawOn(canvas, x, y)
+    x = letter[0]-70-100-5
+    y = y-20
+    canvas.setFont('Helvetica', 13)
+    canvas.drawString(x, y, f"Total: {total} fcfa")
+    
+    
+    x = 70
+    y = y-40
+    canvas.setFont('Helvetica', 10)
+    canvas.drawString(x, y, "Le Client")
+    #canvas.line(x, y-5, x+90, y-5)
+    y = y-20
+    canvas.setFont('Helvetica', 13)
+    if client.nom != 'default':
+        canvas.drawString(x, y, f'{client.prenoms} {client.nom}')
+    
+    
+    x = letter[0]-70-100-5
+    y = y+20
+    canvas.setFont('Helvetica', 10)
+    canvas.drawString(x, y, "Le Vendeur")
+    #canvas.line(x, y-5, x+90, y-5)
+    '''
+    y = y-20
+    canvas.setFont('Helvetica', 13)
+    canvas.drawString(x, y, f'AMADOU SAMA')
+    '''
+    
+    canvas.setFont('Helvetica', 20)
+    x = 200
+    y = y-100
+    canvas.drawString(x, y, f"Merci et à bientôt")
+    
+    x = 70
+    y = 30
+    canvas.line(x, y, x+letter[0]-150, y)
+    canvas.setFont('Helvetica', 10)
+    x = 90
+    y = y-20
+    #canvas.drawString(x, y, f'RC : BF BBD 2016 A 0958    -   IFU : 00077127N   -   COMPTE ECOBANK N°170401709001')
+    canvas.showPage()
+    canvas.save()
+
+"""

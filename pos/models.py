@@ -3,6 +3,19 @@ from django.contrib.auth.models import User
 import datetime
 from django.utils import timezone
 
+class Parametre(models.Model):
+    choix_recu = models.TextChoices('choix_recu', 'A4 Thermique')
+    type_recu = models.CharField(choices=choix_recu.choices, max_length=200)
+    afficher_le_nom_du_client_sur_le_recu = models.BooleanField(default=False, blank=True, null=True)
+    afficher_le_nom_du_vendeur_sur_le_recu = models.BooleanField(default=False, blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if self.__class__.objects.count():
+            self.pk = self.__class__.objects.first().pk
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return f'type recu: {self.type_recu}, affricher nom client: {self.afficher_le_nom_du_client_sur_le_recu}, afficher nom vendeur : {self.afficher_le_nom_du_vendeur_sur_le_recu}'
 
 class Fournisseur(models.Model):
     fournisseur = models.CharField(max_length=200)

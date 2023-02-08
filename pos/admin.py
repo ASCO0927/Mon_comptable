@@ -26,6 +26,8 @@ class SortieAdmin(admin.ModelAdmin):
 class VenteAdmin(admin.ModelAdmin):
     date_hierarchy = 'date_vente'
 
+
+admin.site.register(Parametre)
 admin.site.register(Categorie, CategorieAdmin)
 admin.site.register(Article, ArticleAdmin)
 admin.site.register(Entree, EntreeAdmin)

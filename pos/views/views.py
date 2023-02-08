@@ -13,7 +13,7 @@ from ..models import (Article, Avarie, Caisse, Categorie, Client,
                      CompteOrangeMoney, Controle, Depot, Entree,
                      HistoriqueDepotRamassageCaisse,
                      HistoriqueDepotRamassageCompteOrangeMoney,
-                     HistoriqueTransactionsClient, Sortie, Vente)
+                     HistoriqueTransactionsClient, Sortie, Vente, Parametre)
 
 from .client import *
 from .vente import *
