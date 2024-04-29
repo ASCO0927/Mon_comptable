@@ -1,0 +1,136 @@
+{% extends "pos/base.html" %}
+
+{% block title %}Collecte Caisse Orange Money{% endblock %}
+
+{% block script %}
+<script>
+    let caisse;
+    let orange_money;
+    
+    function update_montant_caisse() {        
+        $('#montant_caisse').html(caisse);
+        $('#orange_money').html(orange_money);
+    }
+
+
+    $(document).ready(function () {
+        $.ajax({
+            type: 'GET',
+            url: "{% url 'pos:vente' %}",
+            success: function (response) {
+                caisse = response.caisse;
+                orange_money = response.orange_money;
+                console.log(caisse);
+                update_montant_caisse();
+            },
+            error: function (response) {
+                swal("Erreur!", "Une erreur s'est produite. Contactez le +22665136188 si l'erreur persiste!", "error");
+            },
+        });
+        $('#encaissement_input_id').val(0);
+        
+
+        $('#enregistrer').on('click', function (e) {
+            e.preventDefault();
+            
+            if ( parseFloat($('#encaissement_input_id').val()) > parseFloat(orange_money) || parseFloat($('#encaissement_input_id').val()) < 0) {
+                swal("Erreur!", "montant invalide", "error");
+                return false;
+            }
+
+            $.ajax({
+                type: 'POST',
+                url: "{% url 'pos:collecte_caisse_orange_money' user.id %}",
+                data: {
+                    csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+                    montant_decaissement: $('#encaissement_input_id').val()
+                },
+                success: function (response) {
+                    swal("Opération réussie!", "Ramassage enregistré!", "success").then(res => {
+                        location.replace("/pos/"+"{{user.id}}"+"/controle/collecte_caisse_orange_money/");
+                    });
+
+                    caisse = response.caisse;
+                    orange_money = response.orange_money;
+                    console.log(caisse);
+
+                    update_montant_caisse();
+                    $('#encaissement_input_id').val(0);
+                },
+                error: function (response) {
+                    swal("Erreur!", "Une erreur s'est produite. Contactez le +22665136188 si l'erreur persiste!", "error");
+                }
+            });
+        });
+
+    });
+</script>
+{% endblock %}
+
+{% block main %}
+<div class="container-fluid" style="margin-top: 50px; margin-bottom: 100px;">
+    <div class="row" style="margin-bottom: 1%;">
+        <div class="col-4">
+        </div>
+
+        <div class="col-6">
+            <a class="btn btn-success float-right" href="#">Caisse : <span id="montant_caisse"></span> FCFA</a>
+        </div>
+        <div class="col-2">
+            <a class="btn btn-warning float-right" href="#">Orange Money : <span id="orange_money"></span> FCFA</a>
+        </div>
+    </div>
+    <div class="row">
+        
+        <div class="col-12">
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="row" style="margin-top: 10px;">
+                        <div class="col-8">
+                            <form class="form-inline">
+                                <div class="form-group mx-sm-3 mb-2">
+                                    Ramasser
+                                    <input type="number" class="form-control" id="encaissement_input_id"
+                                        min="0">
+                                </div>
+                                
+                                <div class="form-group mb-2">
+                                    <button class="btn btn-primary float-right" id="enregistrer">Enregistrer</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="col-12 table-responsive">
+            <table id="liste_dep_ram" class="table table-striped table-bordered " style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Jour</th>
+                        <th>Heure</th>
+                        <th>Operation</th>
+                        <th>Montant</th>
+                        <th>Operateur</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for hist in liste_dep_ram %}
+                    <tr>
+                        <td>{{ hist.jour }}</td>
+                        <td>{{ hist.heure }}</td>
+                        <td>{{ hist.type_operation }}</td>
+                        <td>{{ hist.montant }}</td>
+                        <td>{{ hist.operateur }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends "pos/base.html" %}
+
+{% block title %}Nouvelle Article{% endblock %}
+
+{% block style %}
+<style>
+    
+</style>
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function() {
+        $(window).keydown(function(event){
+            if(event.keyCode == 13) {
+                event.preventDefault();
+                return false;
+            }
+        });
+
+        $('#select_categorie_id').select2({
+            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
+        });
+
+        $("#enregister").on('click', function (e) {
+            e.preventDefault();
+            $('#enregister').attr('disabled', true);
+
+            $.ajax({
+                type: 'POST',
+                url: "{% url 'pos:nouvelle_article' user.id %}",
+                data: {
+                    csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+                    categorie_id: $('#select_categorie_id').val(),
+                    nom_article: $('#nom_article').val(),
+                    PAU: $('#PAU').val(),
+                    PVU: $('#PVU').val(),
+                    PVG: $('#PVG').val(),
+                    qte: $('#qte').val(),
+                    code_barres: $('#code_barres').val(),
+                    date_peremption: $('#date_peremption').val(),
+                },
+                success: function (response) {
+                    swal("Opération réussie!", "Article enregistré!", "success").then(res => {
+                        $('#nom_article').val('');
+                        $('#PAU').val(0);
+                        $('#PVU').val(0);
+                        $('#PVG').val(0);
+                        $('#qte').val(0);
+                        $('#code_barres').val('');
+                        $('#date_peremption').val('');
+                    });
+                    $('#enregister').attr('disabled', false);
+                },
+                error: function (response) {
+                    swal("Erreur!", "Une erreur s'est produite. \n "+response.responseJSON.message+"\n Contactez le +22665136188 si l'erreur persiste!", "error");
+                    $('#enregister').attr('disabled', false);
+                }
+            });
+        });
+
+    });
+</script>
+{% endblock %}
+
+{% block main %}
+<div class="container-fluid" style="margin-top: 50px; margin-bottom: 100px;">
+    <div class="col-12">
+        <a class="btn btn-primary mb-2 float-right" href="{% url 'pos:nouvelle_categorie' user.id %}" >Nouvelle catégorie</a>
+    </div>
+    <div class="row col-12">
+        <form style="width: 100%;">
+            <div class="form-group">
+                <label for="select_categorie_id">Choisir Une Catégorie</label>
+                <select class="js-states form-control" id="select_categorie_id" name="article">
+                    {% for categorie in liste_categories %}
+                    <option value="{{categorie.id}}">{{categorie.nom_categorie}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="exampleFormControlInput1">Nom de l'article</label>
+                <input type="text" class="form-control" id="nom_article" >
+            </div>
+            
+            <div class="form-group">
+                <label for="exampleFormControlInput1">Code barres</label>
+                <input type="text" class="form-control" id="code_barres" >
+            </div>
+            <div class="form-group">
+                <label for="exampleFormControlInput1">Date peremption</label>
+                <input type="date" class="form-control" id="date_peremption" >
+            </div>
+            
+            <div class="form-group">
+                <label for="qte">Quantité en stock</label>
+                <input type="number" class="form-control" id="qte" step="1" value=0 min=0>
+            </div>
+            <div class="form-group">
+                <label for="exampleFormControlInput1">Prix De Vente Unitaire de l'article au Detail</label>
+                <input type="number" class="form-control" id="PVU" step=".01" value=0>
+            </div>
+
+            <div class="form-group">
+                <label for="exampleFormControlInput1">Prix De Vente Unitaire de l'article en Gros</label>
+                <input type="number" class="form-control" id="PVG" step=".01" value=0>
+            </div>
+
+            <div class="form-group">
+                <label for="exampleFormControlInput1">Prix d'Achat Unitaire de l'article</label>
+                <input type="number" class="form-control" id="PAU" step=".01" value=0>
+            </div>
+            <button type="submit" id="enregister" class="btn btn-primary mb-2 float-right">Enregistrer</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

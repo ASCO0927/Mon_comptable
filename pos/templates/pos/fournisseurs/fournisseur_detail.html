@@ -1,0 +1,9 @@
+{% extends "pos/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block main %}
+  <h2>{{ fournisseur.reference }}</h2>
+  <p>Montant du: {{ fournisseur.montant_du_au_fournisseur }}</p>
+  <a href="{% url 'pos:fournisseur_edit' pk=fournisseur.pk %}">Edit</a>
+  <a href="{% url 'pos:fournisseur_delete' pk=fournisseur.pk %}">Delete</a>
+{% endblock %}

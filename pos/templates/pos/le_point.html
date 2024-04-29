@@ -1,0 +1,294 @@
+{% extends "pos/base.html" %}
+
+{% block title %}Le point{% endblock %}
+
+{% block style %}
+<style>
+    .dataTables_wrapper .dataTables_length {
+        float: right;
+    }
+
+    .dataTables_wrapper .dataTables_filter {
+        float: right;
+        text-align: left;
+    }
+</style>
+{% endblock %}
+
+
+{% block script %}
+<script>
+    function arrondir_montants(nombre){
+        mod = nombre%25;
+        if (mod != 0) {
+            return nombre - mod;
+        } else {
+            return nombre;
+        }
+    }
+    
+    $(document).ready(function () {
+        let start_date;
+        let end_date;
+        let end_date_input;
+        let end_time_input;
+        let start_date_input;
+        let start_time_input;
+        let liste_des_controles = [];
+        let categories = [];
+
+        $('#end_ok_button').prop('disabled', true);
+
+        var table1 = $('#table1').DataTable({
+            "bInfo": false,
+            "paging": true,
+            //"ordering": false,
+            //"bFilter": false,
+            "bPaginate": false,
+            language: {
+                search: "",
+                searchPlaceholder: "Recherche"
+            }
+        });
+
+
+        $(".date_time_input").on('change', function () {
+            let start_date_val = $("#start_date_input").val();
+            let start_time_val = $("#start_time_input").val();
+            let end_date_val = $("#end_date_input").val();
+            let end_time_val = $("#end_time_input").val();
+
+            start_date = moment('' + start_date_val + ' ' + start_time_val);
+            end_date = moment('' + end_date_val + ' ' + end_time_val);
+
+            if (start_date.isValid() && end_date.isValid()) {
+                $('#end_ok_button').prop('disabled', false);
+            } else {
+                $('#end_ok_button').prop('disabled', true);
+            }
+        });
+
+        $("#now_button").on('click', function () {
+            end_date = new Date();
+            $("#end_date_input").val(moment(end_date).format('YYYY-MM-DD'));
+            $("#end_time_input").val(moment(end_date).format('HH:mm'));
+
+            let start_date_val = $("#start_date_input").val();
+            let start_time_val = $("#start_time_input").val();
+
+            if (start_date.isValid()) {
+                $('#end_ok_button').prop('disabled', false);
+            } else {
+                $('#end_ok_button').prop('disabled', true);
+            }
+
+        });
+        $("#dernier_button").on('click', function () {
+            start_date = moment(liste_des_controles[0].date_fin);
+
+            $("#start_date_input").val(moment(liste_des_controles[0].date_fin).format('YYYY-MM-DD'));
+            $("#start_time_input").val(moment(liste_des_controles[0].date_fin).format('HH:mm'));
+
+            let end_date_val = $("#end_date_input").val();
+            let end_time_val = $("#end_time_input").val();
+
+            end_date = moment('' + end_date_val + ' ' + end_time_val);
+
+            if (end_date.isValid()) {
+                $('#end_ok_button').prop('disabled', false);
+            } else {
+                $('#end_ok_button').prop('disabled', true);
+            }
+        });
+        $("#end_ok_button").on('click', function () {
+            $.ajax({
+                type: 'POST',
+                url: "{% url 'pos:le_point' user.id %}",
+                data: {
+                    csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+                    debut: moment(start_date).format(),
+                    fin: moment(end_date).format()
+                },
+                success: function (response) {
+                    let montant_total = 0;
+                    liste_des_controles.push({ 'date_debut': response.date_debut, 'date_fin': response.date_fin });
+                    renderTable1();
+
+                    response.art_vendus.forEach(element => {
+                        if (!categories.includes(element.categorie)) {
+                            categories.push(element.categorie);
+                            $('#table2-div').append(
+                                `<table id="` + element.categorie + `" class="table table-striped table-bordered test" style="width:100%">
+                                        <thead>
+                                            <tr>
+                                                <th>Categorie</th>
+                                                <th>Article</th>
+                                                <th>PAU</th>
+                                                <th>PVU</th>
+                                                <th>Qte Vendus</th>
+                                                <th>Montant Vente</th>
+                                                <th>Benefice</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                    <div id="montant_total_`+ element.categorie + `" class="row" style="margin-top: 15px; margin-left: 10px;">Montant total : </div>
+                                    `
+                            )
+                        }
+                    });
+
+                    supprimer_lignes_tables_article();
+
+                    categories.forEach(ctg => {
+                        rows = '';
+                        response.art_vendus.forEach(element => {
+                            if (element.categorie == ctg) {
+                                rows = rows +
+                                    `<tr>
+                                        <td>`+ element.categorie + `</td>
+                                        <td>`+ element.nom_article + `</td>
+                                        <td>`+ element.PAU + `</td>
+                                        <td>`+ element.PVU + `</td>
+                                        <td>`+ element.quantite + `</td>
+                                        <td>`+ element.montant_vente + `</td>
+                                        <td>`+ element.benefice+ `</td>
+                                    </tr>`
+                            }
+                        });
+                        $('#' + ctg + ' tbody').append(rows);
+
+                        $('#'+ctg).DataTable({
+                            "bInfo": false,
+                            "paging": false,
+                            "bPaginate": false,
+                            language: {
+                                search: "",
+                                searchPlaceholder: "Recherche"
+                            }
+                        });
+
+                    });
+                    console.log(response.art_vendus);
+                    categories.forEach(ctg => {
+                        let montant = 0;
+                        response.art_vendus.forEach(element => {
+                            if (element.categorie == ctg) {
+                                montant = montant + Number(element.montant_vente);
+                            }
+                        });
+                        $('#montant_total_' + ctg).html(`<div id="montant_total_` + ctg + `" class="row" style="margin-top: 8px; margin-left: 10px;  margin-bottom: 60px">Montant ` + ctg + ` : ` + montant + ` </div>`);
+                    });
+
+                    response.art_vendus.forEach(element => {
+                        montant_total = montant_total + Number(element.montant_vente);
+                    });
+                    $('#montant_total').html(`<div id="montant_total" class="row" style="margin-top: 15px; margin-left: 10px;">Montant total : ` + montant_total + ` </div>`);
+                    $('#benefice_periode').html(`<div id="montant_total" class="row" style="margin-top: 15px; margin-left: 10px;">Benefice sur la periode : ` + response.benefice_periode + ` </div>`);
+                },
+                error: function (response) {
+                    alert('ooooooooooooooooo');
+                }
+            });
+        });
+
+        $.ajax({
+            type: 'GET',
+            url: "{% url 'pos:le_point' user.id %}",
+            success: function (response) {
+                response.liste_controle.forEach(element => {
+                    //table1.row.add([moment(element.date_debut).format('DD/MM/YYYY')+' '+moment(element.date_debut).format('HH:mm'), moment(element.date_fin).format('DD/MM/YYYY')+' '+moment(element.date_fin).format('HH:mm')]).draw(false);
+                    liste_des_controles.push(element);
+                });
+                renderTable1();
+            },
+            error: function (response) {
+                alert('ooooooooooooooooo');
+            },
+        });
+
+        function renderTable1() {
+            liste_des_controles.sort(function (a, b) {
+                if (a.date_fin > b.date_fin) return -1;
+                if (a.date_fin < b.date_fin) return 1;
+                return 0;
+            });
+            table1.clear().draw();
+            liste_des_controles.forEach(element => {
+                table1.row.add([moment(element.date_debut).format('DD/MM/YYYY') + ' ' + moment(element.date_debut).format('HH:mm'), moment(element.date_fin).format('DD/MM/YYYY') + ' ' + moment(element.date_fin).format('HH:mm')]).draw(false);
+            });
+        }
+
+        function supprimer_lignes_tables_article() {
+            categories.forEach(categorie => {
+                $('#' + categorie + ' tbody tr').each(function (index) {
+                    this.remove();
+                });
+            });
+        }
+
+    });
+</script>
+{% endblock %}
+
+
+{% block main %}
+<div class="container-fluid" style="margin-top: 50px; margin-bottom: 100px;">
+    <div class="row" style="margin-bottom: 10px;">
+        <div class="col-4" style="border-right: 1px solid black;">
+
+        </div>
+        <div class="col-8 align-self-end">
+            <div class="row">
+                <div class="col-sm-5">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <button id="dernier_button" class="btn btn-outline-secondary" type="button">Dernier</button>
+                        </div>
+                        <input id="start_date_input" type="date" class="form-control date_time_input"
+                            style="width: 30%;">
+                        <input id="start_time_input" type="time" class="form-control date_time_input"
+                            style="width: 15%;">
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <button id="now_button" class="btn btn-outline-secondary" type="button">Maintenant</button>
+                        </div>
+                        <input id="end_date_input" type="date" class="form-control date_time_input" style="width: 30%;">
+                        <input id="end_time_input" type="time" class="form-control date_time_input" style="width: 20%;">
+                    </div>
+                </div>
+                <div class="col-sm-1">
+                    <button id="end_ok_button" class="btn btn-outline-secondary float-right" type="button"
+                        style="width: fit-content;">Ok</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-4 table-responsive" style="border-right: 1px solid black;">
+            <table id="table1" class="table table-striped table-bordered " style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Du</th>
+                        <th>Au</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+        <div class="col-8 table-responsive">
+            <div id="table2-div" style="margin-bottom: 100px;">
+
+            </div>
+            <div id="montant_total" class="row" style="margin-top: 10px; margin-left: 10px;">Montant total : </div>
+            
+            <div id="benefice_periode" class="row" style="margin-top: 10px; margin-left: 10px;">Benefice sur la periode : </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

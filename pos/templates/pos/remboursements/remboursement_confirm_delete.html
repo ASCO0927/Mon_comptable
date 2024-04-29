@@ -1,0 +1,14 @@
+{% extends "pos/base.html" %}
+
+{% block title %}Supprimer remboursement{% endblock %}
+
+{% block main %}
+<div class="container-fluid" style="margin-top: 50px; margin-bottom: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center;" >
+    <h2>Supprimer le remboursement {{ remboursement.date }}</h2>
+    <form method="POST">
+        {% csrf_token %}
+        <p>Êtes-vous sûr de vouloir supprimer ce remboursement ?</p>
+        <button type="submit" class="btn btn-danger">Oui, supprimer</button>
+    </form>
+</div>
+{% endblock %}

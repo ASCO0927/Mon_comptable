@@ -1,0 +1,93 @@
+{% extends "pos/base.html" %}
+
+{% block title %}Nouvelle entrée{% endblock %}
+
+{% block style %}
+<style>
+    
+</style>
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function() {
+        $('#select_article_id').select2({
+            placeholder: "Choisir un article",
+            allowClear: true,
+            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
+        });
+        $('#fournisseur').select2({
+            placeholder: "Choisir le fournisseur",
+            allowClear: true,
+            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
+        });
+
+        $("#enregister").on('click', function (e) {
+            $('#enregister').attr('disabled', true);
+
+            e.preventDefault();
+            $.ajax({
+                type: 'POST',
+                url: "{% url 'pos:nouvelle_entree' user.id %}",
+                data: {
+                    csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+                    article_id: $('#select_article_id').val(),
+                    quantite: $('#quantite_article').val(),
+                    fournisseur_id: $('#fournisseur').val(), // Ajout du fournisseur
+                    paye: $('#paye').is(':checked') // Ajout de l'état de paiement
+                },
+                success: function (response) {
+                    swal("Opération réussie!", "Entrée enregistrée!", "success").then(res => {
+                        location.replace("/pos/"+"{{user.id}}"+"/controle/entrees/");
+                    }); 
+                },
+                error: function (response) {
+                    swal("Erreur!", "Une erreur s'est produite. Contactez le +22665136188 si l'erreur persiste!", "error");
+                }
+            });
+        });
+
+    });
+</script>
+{% endblock %}
+
+{% block main %}
+<div class="container-fluid" style="margin-top: 50px; margin-bottom: 100px;">
+    <div class="col-12">
+        <a class="btn btn-primary mb-2 float-right" href="{% url 'pos:nouvelle_article' user.id %}" >Créer un article</a>
+    </div>
+    <div class="row col-12">
+        <form style="width: 100%;">
+            <div class="form-group">
+                <label for="select_article_id">Choisir Un Article</label>
+                <select class="js-states form-control" id="select_article_id" name="article">
+                    <option value="" disabled selected hidden>Choisir</option>
+                    {% for article in liste_articles %}
+                    <option value="{{article.id}}">{{article.nom_article}}, {{article.code_barres}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+              <label for="exampleFormControlInput1">Quantité</label>
+              <input type="number" class="form-control" id="quantite_article" value="1" min="1">
+            </div>
+            <div class="form-group">
+                <label for="fournisseur">Choisir le fournisseur</label>
+                <select class="js-states form-control" id="fournisseur" name="fournisseur">
+                    <option value="" disabled selected hidden>Choisir</option>
+                    {% for fournisseur in liste_fournisseurs %}
+                    <option value="{{fournisseur.id}}">{{fournisseur.reference}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="paye" name="paye" checked>
+                <label class="form-check-label" for="paye">
+                  Payé ?
+                </label>
+            </div>
+            <button type="submit" id="enregister" class="btn btn-primary mb-2 float-right">Enregistrer</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

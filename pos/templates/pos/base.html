@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <title>{% block title %}{% endblock %}</title>
+    {% load static %}
+    
+    {% block style %}{% endblock %}
+    <link rel="stylesheet" type="text/css" href="{% static 'pos/bootstrap-4.0.0-dist/css/bootstrap.min.css' %}">
+    <script src="{% static 'pos/jquery.min.js' %}"></script>
+    <script src="{% static 'pos/popper.min.js' %}"></script>
+    <script src="{% static 'pos/bootstrap-4.0.0-dist/js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'pos/moment.min.js' %}"></script>
+    <script src="{% static 'pos/sweetalert.min.js' %}"></script>
+
+    <link rel="stylesheet" type="text/css"
+        href="{% static 'pos/DataTables/DataTables-1.10.20/css/dataTables.bootstrap4.min.css' %}">
+    <link rel="stylesheet" type="text/css"
+        href="{% static 'pos/DataTables/Select-1.3.1/css/select.bootstrap4.min.css' %}">
+
+    <script src="{% static 'pos/DataTables/DataTables-1.10.20/js/jquery.dataTables.min.js' %}"></script>
+    <script src="{% static 'pos/DataTables/DataTables-1.10.20/js/dataTables.bootstrap4.min.js' %}"></script>
+    <script src="{% static 'pos/DataTables/Select-1.3.1/js/dataTables.select.min.js' %}"></script>
+    <script src="{% static 'pos/DataTables/pdfmake-0.1.36/pdfmake.min.js' %}"></script>
+    <script src="{% static 'pos/DataTables/pdfmake-0.1.36/vfs_fonts.js' %}"></script>
+
+    <link rel="stylesheet" type="text/css" href="{% static 'pos/select2.min.css' %}">
+    <script src="{% static 'pos/select2.min.js' %}"></script>
+
+    <link rel="stylesheet" type="text/css" href="{% static 'pos/print.min.css' %}">
+    <script src="{% static 'pos/print.min.js' %}"></script>
+
+    {% block script %}{% endblock %}
+</head>
+
+<body>
+    {% csrf_token %}
+
+    {% block navbar %}
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <!--a class="navbar-brand" href="#" class="pull-left"> <img width="100" height="80" src="{% static 'images/logo.png' %}"> </a-->
+        <a class="navbar-brand" href="#">Mon Comptable</a>
+        <!--a class="navbar-brand" href="#">ALPOS</a-->
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'pos:vente' %}">Vente <span class="sr-only">(current)</span></a>
+                </li>
+                
+                {% if user.is_superuser %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      Controle
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                      <a class="dropdown-item" href="{% url 'pos:le_point' user.id %}">Faire le point</a>
+                      <a class="dropdown-item" href="{% url 'pos:ctrl_vente' user.id %}">Ventes</a>
+                      <a class="dropdown-item" href="{% url 'pos:ctrl_stock' user.id %}">Stock</a>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'pos:ctrl_entree' user.id %}">Entrées</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'pos:ctrl_article' user.id %}">Catalogue</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'pos:ctrl_categorie' user.id %}">Catégories</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      Caisse
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                      <a class="dropdown-item" href="{% url 'pos:depot_petite_monnaie' user.id %}">Dépot de petite monnaie</a>
+                      <a class="dropdown-item" href="{% url 'pos:collecte_caisse' user.id %}">Ramassage</a>
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      Orange Money
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                      <a class="dropdown-item" href="{% url 'pos:depot_caisse_orange_money' user.id %}">Dépot</a>
+                      <a class="dropdown-item" href="{% url 'pos:collecte_caisse_orange_money' user.id %}">Ramassage</a>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'pos:liste_produits_avaries' user.id %}">Avarie</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'pos:lst_client' %}">Clients</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Fournisseurs
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item" href="{% url 'pos:fournisseur_list' %}">Liste des fournisseurs</a>
+                        <a class="dropdown-item" href="{% url 'pos:remboursement_list' %}">Remboursement des fournisseurs</a>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'pos:arret_compte' %}">Arrets Comptes</a>
+                </li>
+                {% endif %}
+                
+            </ul>
+        </div>
+
+        <a class="btn btn-outline-light my-2 my-sm-0" type="submit" href="{% url 'pos:logout' %}">Se déconnecter</a>
+    </nav>
+    {% endblock %}
+ 
+    {% block main %}
+    {% endblock %}
+
+
+</body>
+
+</html>

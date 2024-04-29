@@ -1,0 +1,73 @@
+{% extends "pos/base.html" %}
+
+{% block title %}Nouvelle entrée{% endblock %}
+
+{% block style %}
+<style>
+    
+</style>
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function() {
+        $('#select_article_id').select2({
+            placeholder: "Choisir un article",
+            allowClear: true,
+            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
+        });
+
+        $("#enregister").on('click', function (e) {
+            e.preventDefault();
+            $.ajax({
+                type: 'POST',
+                url: "{% url 'pos:nouvelle_avarie' user.id %}",
+                data: {
+                    csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+                    article_id: $('#select_article_id').val(),
+                    quantite: $('#quantite_article').val()
+                },
+                success: function (response) {
+                    console.log(response);
+                    swal(response.titre, response.message, response.status).then(res => {
+                        window.location = document.referrer;
+                    });
+                    /*swal("Opération réussie!", "Avarie enregistrée!", "success").then(res => {
+                        window.location = document.referrer;
+                    });*/
+                },
+                error: function (response) {
+                    swal("Erreur!", "Une erreur s'est produite. Contactez le +22665136188 si l'erreur persiste!", "error");
+                }
+            });
+        });
+
+    });
+</script>
+{% endblock %}
+
+{% block main %}
+<div class="container-fluid" style="margin-top: 50px; margin-bottom: 100px;">
+    <div class="col-12">
+        <a class="btn btn-primary mb-2 float-right" href="{% url 'pos:nouvelle_article' user.id %}" >Créer un article</a>
+    </div>
+    <div class="row col-12">
+        <form style="width: 100%;">
+            <div class="form-group">
+                <label for="select_article_id">Choisir Un Article</label>
+                <select class="js-states form-control" id="select_article_id" name="article">
+                    <option value="" disabled selected hidden>Choisir</option>
+                    {% for article in liste_articles %}
+                    <option value="{{article.id}}">{{article.nom_article}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+              <label for="exampleFormControlInput1">Quantité</label>
+              <input type="number" class="form-control" id="quantite_article" value="1" min="1">
+            </div>
+            <button type="submit" id="enregister" class="btn btn-primary mb-2 float-right">Enregistrer</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

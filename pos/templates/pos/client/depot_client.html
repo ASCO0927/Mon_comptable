@@ -1,0 +1,55 @@
+{% extends "pos/base.html" %}
+
+{% block title %}Nouvel Avance{% endblock %}
+
+{% block style %}
+<style>
+    
+</style>
+{% endblock %}
+
+{% block script %}
+<script>
+    
+    $(document).ready(function() {
+
+        $("#enregister").on('click', function (e) {
+            e.preventDefault();
+            $.ajax({
+                type: 'POST',
+                url: "{% url 'pos:avance_client' client.id %}",
+                data: {
+                    csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+                    client_id: '{{client.id}}',
+                    montant: $('#montant').val(),
+                },
+                success: function (response) {
+                    swal("Opération réussie!", "Avance enregistré!", "success").then(res => {
+                        location.replace("/pos/lst/client/");
+                    });
+                },
+                error: function (response) {
+                    swal("Erreur!", "Une erreur s'est produite. Contactez le +22665136188 si l'erreur persiste!", "error");
+                }
+            });
+        });
+
+    });
+</script>
+{% endblock %}
+
+{% block main %}
+<div class="container-fluid" style="margin-top: 50px; margin-bottom: 100px;">
+    <div class="row col-12">
+        <form style="width: 100%;">
+
+            <div class="form-group">
+                <label for="montant">Montant</label>
+                <input type="number" class="form-control" id="montant" name="montant" step="1" value=0 min=0>
+            </div>
+
+            <button type="submit" id="enregister" class="btn btn-primary mb-2 float-right">Enregistrer</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "pos/base.html" %}
+
+{% block title %}Arret Compte{% endblock %}
+
+
+{% block main %}
+<div class="container">
+    <!-- Section 1: Form -->
+    <div class="mt-4">
+        <form method="POST" class="form-inline">
+            {% csrf_token %}
+            <label class="mr-2" for="id_vendeur">Arret compte de:</label>
+            {{ form.vendeur }}
+            <button type="submit" class="btn btn-primary ml-2">Enregistrer</button>
+        </form>
+    </div>
+
+    <!-- Section 2: Table -->
+    <div class="mt-4">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Vendeur</th>
+                    <th scope="col">Montant Caisse</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for arret in arrets_compte %}
+                    <tr>
+                        <td>{{ arret.date_arret }}</td>
+                        <td>{{ arret.vendeur.username }}</td>
+                        <td>{{ arret.montant_caisse }}</td>
+                        <td>
+                            <a href="{% url 'pos:liste_sorties_template_view' arret.pk %}" class="btn btn-primary">Sorties</a>
+                            <!-- You can add action buttons here, such as Edit or Delete -->
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4">No records found</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

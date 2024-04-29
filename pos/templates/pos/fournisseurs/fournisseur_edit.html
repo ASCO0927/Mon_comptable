@@ -1,0 +1,27 @@
+{% extends "pos/base.html" %}
+
+{% block title %}
+Modifier Fournisseur
+{% endblock %}
+
+{% block main %}
+<div class="container-fluid" style="margin-top: 50px; margin-bottom: 100px;">
+    <div class="col-12">
+        <a class="btn btn-primary mb-2 float-right" href="{% url 'pos:fournisseur_list' %}" >Retour à la liste des fournisseurs</a>
+    </div>
+    <div class="row col-12">
+        <form method="POST" style="width: 100%;">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="id_reference">Référence</label>
+                <input type="text" class="form-control" id="id_reference" name="reference" value="{{ form.instance.reference }}">
+            </div>
+            <div class="form-group">
+                <label for="id_montant_du_au_fournisseur">Montant dû au fournisseur</label>
+                <input type="number" class="form-control" id="id_montant_du_au_fournisseur" name="montant_du_au_fournisseur" value="{{ form.instance.montant_du_au_fournisseur }}" step="0.01">
+            </div>
+            <button type="submit" class="btn btn-primary mb-2 float-right">Enregistrer</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends "pos/base.html" %}
+
+{% block title %}Nouvelle catégorie{% endblock %}
+
+{% block style %}
+<style>
+    
+</style>
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function() {
+        $("#enregister").on('click', function (e) {
+            e.preventDefault();
+            $('#enregister').attr('disabled', true);
+            $.ajax({
+                type: 'POST',
+                url: "{% url 'pos:mod_categorie' categorie.id%}",
+                data: {
+                    csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+                    nom_categorie: $('#nom_categorie').val(),
+                },
+                success: function (response) {
+                    swal("Opération réussie!", "Catégorie modifiée!", "success").then(res => {
+                        //location.replace("/pos/" + "{{user.id}}" + "/controle/categories/");
+                        window.location = document.referrer;
+                    });
+                },
+                error: function (response) {
+                    swal("Erreur!", "Une erreur s'est produite. Contactez le +22665136188 si l'erreur persiste!", "error");
+                }
+            });
+        });
+
+        $("#annuler").on('click', function (e) {
+            e.preventDefault();
+            //location.replace("/pos/" + "{{user.id}}" + "/controle/categories/");
+            window.location = document.referrer;
+        });
+
+        $("#supprimer").on('click', function (e) {
+            e.preventDefault();
+            $.ajax({
+                type: 'GET',
+                url: "{% url 'pos:sup_categorie' user.id categorie.id %}",
+                success: function (response) {
+                    swal("Opération réussie!", "Catégorie supprimée!", "success").then(res => {
+                        //location.replace("/pos/" + "{{user.id}}" + "/controle/categories/");
+                        window.location = document.referrer;
+                    });
+                },
+                error: function (response) {
+                    swal("Erreur!", "Une erreur s'est produite. Contactez le +22665136188 si l'erreur persiste!", "error");
+                }
+            });
+        });
+
+    });
+</script>
+{% endblock %}
+
+{% block main %}
+<div class="container-fluid" style="margin-top: 50px; margin-bottom: 100px;">
+    <div class="row col-12">
+        <form style="width: 100%;">
+            <div class="form-group">
+              <label for="exampleFormControlInput1">Dénomination de la nouvelle catégorie</label>
+              <input type="text" class="form-control" id="nom_categorie" value="{{categorie.nom_categorie}}">
+            </div>
+            <button id="supprimer" class="btn btn-danger mb-2">Supprimer</button>
+            <button type="submit" id="enregister" class="btn btn-success mb-2 float-right"
+                style="margin-left: 5px;">Enregistrer</button>
+            <button id="annuler" class="btn btn-primary mb-2 float-right">Annuler</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

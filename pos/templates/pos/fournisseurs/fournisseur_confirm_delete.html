@@ -1,0 +1,15 @@
+{% extends "pos/base.html" %}
+
+{% block main %}
+<div class="container-fluid" style="margin-top: 50px; margin-bottom: 100px;">
+    <div class="row col-12" style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+        <h2>Supprimer le Fournisseur {{ fournisseur.reference }}</h2>
+        <form method="POST">
+            {% csrf_token %}
+            <p>Êtes-vous sûr de vouloir supprimer "{{ fournisseur.reference }}" ?</p>
+            <button type="submit" class="btn btn-danger">Oui, supprimer</button>
+            <a href="{% url 'pos:fournisseur_list' %}" class="btn btn-secondary">Non, retour à la liste</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

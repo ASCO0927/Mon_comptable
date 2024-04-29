@@ -1,0 +1,47 @@
+{% extends "pos/base.html" %}
+
+{% block title %}Liste des categories{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function () {
+        var liste_categories = $('#liste_categories').DataTable({
+            "bInfo": false,
+            "bPaginate": false,
+            "aaSorting": [],
+            language: {
+                search: "",
+                searchPlaceholder: "Recherche"
+            }
+        });
+
+    });
+</script>
+{% endblock %}
+
+{% block main %}
+<div class="container-fluid" style="margin-top: 50px; margin-bottom: 100px;">
+    <div class="row">
+        <div class="col-12" style="margin-bottom: 2%;"><a type="button" href="{% url 'pos:nouvelle_categorie' user.id %}" class="btn btn-primary float-right">Nouvelle Catégorie</a></div>
+        
+        <div class="col-12 table-responsive">
+            <table id="liste_categories" class="table table-striped table-bordered " style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Catégories</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for categorie in liste_categories %}
+                    <tr>
+                        <td>{{ categorie.nom_categorie }}</td>
+                        <td><a type="button" href="{% url 'pos:mod_categorie' categorie.id %}" class="btn btn-primary">Modifier</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

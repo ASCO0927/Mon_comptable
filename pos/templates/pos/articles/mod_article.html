@@ -1,0 +1,130 @@
+{% extends "pos/base.html" %}
+
+{% block title %}Modifier Article{% endblock %}
+
+{% block style %}
+<style>
+
+</style>
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function () {
+        $(window).keydown(function(event){
+            if(event.keyCode == 13) {
+                event.preventDefault();
+                return false;
+            }
+        });
+        
+        $('#select_categorie_id').select2({
+            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
+        });
+
+        $("#enregister").on('click', function (e) {
+            e.preventDefault();
+            $('#enregister').attr('disabled', true);
+            $.ajax({
+                type: 'POST',
+                url: "{% url 'pos:mod_article' article.id %}",
+                data: {
+                    csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+                    categorie_id: $('#select_categorie_id').val(),
+                    nom_article: $('#nom_article').val(),
+                    PAU: $('#PAU').val(),
+                    PVU: $('#PVU').val(),
+                    PVG: $('#PVG').val(),
+                    code_barres: $('#code_barres').val(),
+                    date_peremption: $('#date_peremption').val(),
+                },
+                success: function (response) {
+                    swal("Opération réussie!", "Article modifié!", "success").then(res => {
+                        //location.replace("/pos/" + "{{user.id}}" + "/controle/articles/");
+                        window.location = document.referrer;
+                    });
+                },
+                error: function (response) {
+                    swal("Erreur!", "Une erreur s'est produite. Contactez le +22665136188 si l'erreur persiste!", "error");
+                }
+            });
+        });
+
+        $("#annuler").on('click', function (e) {
+            e.preventDefault();
+            //location.replace("/pos/" + "{{user.id}}" + "/controle/articles/");
+            window.location = document.referrer;
+        });
+
+        $("#supprimer").on('click', function (e) {
+            e.preventDefault();
+            $.ajax({
+                type: 'GET',
+                url: "{% url 'pos:sup_article' user.id article.id %}",
+                success: function (response) {
+                    swal("Opération réussie!", "Article supprimé!", "success").then(res => {
+                        //location.replace("/pos/" + "{{user.id}}" + "/controle/articles/");
+                        window.location = document.referrer;
+                    });
+                },
+                error: function (response) {
+                    swal("Erreur!", "Une erreur s'est produite. Contactez le +22665136188 si l'erreur persiste!", "error");
+                }
+            });
+        });
+
+    });
+</script>
+{% endblock %}
+
+{% block main %}
+<div class="container-fluid" style="margin-top: 50px; margin-bottom: 100px;">
+    <div class="col-12">
+        <a class="btn btn-primary mb-2 float-right" href="{% url 'pos:nouvelle_categorie' user.id %}">Nouvelle
+            catégorie</a>
+    </div>
+    <div class="row col-12">
+        <form style="width: 100%;">
+            <div class="form-group">
+                <label for="select_categorie_id">Choisir Une Catégorie</label>
+                <select class="js-states form-control" id="select_categorie_id" name="article">
+                    <option value="{{article.categorie.id}}" selected>{{article.categorie}}</option>
+                    {% for categorie in liste_categories %}
+                        {% if categorie.id !=  article.categorie.id%}
+                            <option value="{{categorie.id}}">{{categorie.nom_categorie}}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="exampleFormControlInput1">Nom de l'article</label>
+                <input type="text" class="form-control" id="nom_article" value="{{article.nom_article}}">
+            </div>
+            <div class="form-group">
+                <label for="exampleFormControlInput1">Prix d'Achat Unitaire de l'article</label>
+                <input type="number" class="form-control" id="PAU" step=".01" value="{{article.PAU}}">
+            </div>
+            <div class="form-group">
+                <label for="exampleFormControlInput1">Prix De Vente Unitaire de l'article au détail</label>
+                <input type="number" class="form-control" id="PVU" step=".01" value="{{article.PVU}}">
+            </div>
+            <div class="form-group">
+                <label for="exampleFormControlInput1">Prix De Vente Unitaire de l'article en Gros</label>
+                <input type="number" class="form-control" id="PVG" step=".01" value="{{article.PVG}}">
+            </div>
+            <div class="form-group">
+                <label for="exampleFormControlInput1">Code barres</label>
+                <input type="text" class="form-control" id="code_barres" value="{{article.code_barres}}">
+            </div>
+            <div class="form-group">
+                <label for="exampleFormControlInput1">Date peremption</label>
+                <input type="date" class="form-control" id="date_peremption" value="{{article.date_peremption}}">
+            </div>
+            <button id="supprimer" class="btn btn-danger mb-2">Supprimer</button>
+            <button type="submit" id="enregister" class="btn btn-success mb-2 float-right"
+                style="margin-left: 5px;">Enregistrer</button>
+            <button id="annuler" class="btn btn-primary mb-2 float-right">Annuler</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends "pos/base.html" %}
+
+{% block title %}Stock{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function () {
+        var table_article = $('#liste_articles').DataTable({
+            "processing": true,
+            "serverSide": true,
+            "ajax": "{% url 'pos:stock_data' %}",
+            "columns": [
+                { "data": 0 },  // Categorie
+                { "data": 1 },  // Article
+                { "data": 2 },  // PAU
+                { "data": 3 },  // PVU detail
+                { "data": 4 },  // PVU en gros
+                { "data": 5 },  // Stock
+                { "data": 6, "visible": false },  // Article ID
+                { "data": 7, "visible": false },  // Categorie ID
+                { "data": 8, "visible": false },  // Derniere entree ID
+            ],
+            "columnDefs": [
+                {
+                    "targets": [0, 1, 2, 3, 4, 5],
+                    "render": function (data, type, row, meta) {
+                        var base_url = "";
+                        var urls = {
+                            0: base_url + "/pos/mod/categorie/" + row[7],
+                            1: base_url + "/pos/mod/article/" + row[6],
+                            2: base_url + "/pos/mod/article/" + row[6],
+                            3: base_url + "/pos/mod/article/" + row[6],
+                            4: base_url + "/pos/mod/article/" + row[6],
+                            5: base_url + "/pos/mod/entree/" + row[8]
+                        };
+                        return "<a href='" + urls[meta.col] + "'>" + data + "</a>";
+                    }
+                },
+            ],
+            language: {
+                search: "",
+                searchPlaceholder: "Recherche"
+            },
+        });
+
+        $("#btn_afficher_val_stock").click(function() {
+            $("#btn_afficher_val_stock").hide();
+            $("#btn_calcul_en_cours").removeAttr("hidden");
+
+            $.ajax({
+                url: "{% url 'pos:get_stock_value' %}",
+                method: "GET",
+                dataType: "json",
+                success: function (data) {
+                    // afficher la valeur du stock
+                    $("#val_stock_achat").text(data.stock_achat_value);
+                    $("#val_stock_vente_detail").text(data.stock_vente_detail_value);
+
+                    // afficher les éléments cachés
+                    $(".row").removeAttr("hidden");
+                    $("#btn_calcul_en_cours").hide();
+                }
+            });
+        });
+
+    });
+</script>
+
+{% endblock %}
+
+{% block main %}
+<div class="container-fluid" style="margin-top: 50px; margin-bottom: 100px;">
+    <div class="row">
+        <div class="col-12 table-responsive">
+            <table id="liste_articles" class="table table-striped table-bordered " style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Categorie</th>
+                        <th>Article</th>
+                        <th>PAU</th>
+                        <th>PVU detail</th>
+                        <th>PVU en gros</th>
+                        <th>Stock</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+
+    <button class="btn btn-primary float-right" id="btn_afficher_val_stock">afficher valeur stock</button>
+    <button hidden class="btn btn-primary float-right" id="btn_calcul_en_cours">calcul en cours ...</button>
+
+    <div hidden class="row" style="margin-bottom: 1%; margin-top: 3%;">
+        <div class="col-12">
+            <a class="btn btn-primary float-right" href="#">Valeur totale du stock à l'achat : <span id="val_stock_achat"></span>
+                FCFA</a>
+        </div>
+    </div>
+    <div hidden class="row" style="margin-bottom: 1%;">
+        <div class="col-12">
+            <a class="btn btn-primary float-right" href="#">Valeur totale du stock à la vente au detail : <span id="val_stock_vente_detail"></span> FCFA</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "pos/base.html" %}
+
+{% block title %}Liste des fournisseurs{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function () {
+        var liste_fournisseurs = $('#liste_fournisseurs').DataTable({
+            "bInfo": false,
+            "bPaginate": false,
+            "aaSorting": [],
+            language: {
+                search: "",
+                searchPlaceholder: "Recherche"
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+{% block main %}
+<div class="container-fluid" style="margin-top: 50px; margin-bottom: 100px;">
+    <div class="row">
+        <div class="col-12" style="margin-bottom: 2%;">
+            <a type="button" href="{% url 'pos:fournisseur_new' %}" class="btn btn-primary float-right">Nouveau Fournisseur</a>
+        </div>
+        <div class="col-12" style="margin-bottom: 2%;">
+            <a type="button" href="{% url 'pos:remboursement_new' %}" class="btn btn-primary float-right">Nouveau Remboursement</a>
+        </div>
+        
+        <div class="col-12 table-responsive">
+            <table id="liste_fournisseurs" class="table table-striped table-bordered " style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Référence</th>
+                        <th>Montant dû</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fournisseur in fournisseurs %}
+                    <tr>
+                        <td>{{ fournisseur.reference }}</td>
+                        <td>{{ fournisseur.montant_du_au_fournisseur }}</td>
+                        <td>
+                            <a type="button" href="{% url 'pos:fournisseur_edit' fournisseur.id %}" class="btn btn-primary">Modifier</a>
+                            <a type="button" href="{% url 'pos:fournisseur_delete' fournisseur.id %}" class="btn btn-danger">Supprimer</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

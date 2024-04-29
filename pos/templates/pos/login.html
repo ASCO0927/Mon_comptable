@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>login</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'pos/bootstrap-4.0.0-dist/css/bootstrap.min.css' %}">
+    <script src="{% static 'pos/bootstrap-4.0.0-dist/js/bootstrap.min.js' %}" ></script>
+    <script src="{% static 'pos/jquery-3.2.1.slim.min.js' %}"></script>
+    <script src="{% static 'pos/popper.min.js' %}"></script>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="row justify-content-center" style="margin-top: 150px">
+            <div class="col-5">
+                <form action="{% url 'pos:login' %}" method="post">
+                    {% csrf_token %}
+                  <div class="form-group">
+                    <label for="username">Nom d'utilisateur</label>
+                    <input type="text" class="form-control" id="username" name="username" placeholder="nom d'utilisateur">
+                  </div>
+                  <div class="form-group">
+                    <label for="password">Mot de passe</label>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="mot de passe">
+                  </div>
+                    <button type="submit" class="btn btn-primary">Valider</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
