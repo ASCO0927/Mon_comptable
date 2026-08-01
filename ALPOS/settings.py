@@ -136,3 +136,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_STORAGE = 'whitenoise.storage.StaticFilesStorage'
 
 CSRF_TRUSTED_ORIGINS = ['https://moncomptable-production.up.railway.app']
+
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SECURE = False
