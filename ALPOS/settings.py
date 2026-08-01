@@ -137,5 +137,8 @@ STATICFILES_STORAGE = 'whitenoise.storage.StaticFilesStorage'
 
 CSRF_TRUSTED_ORIGINS = ['https://moncomptable-production.up.railway.app']
 
+
+CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_SAMESITE = 'Lax'
-SESSION_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
