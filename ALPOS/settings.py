@@ -134,4 +134,5 @@ DEFAULT_AUTO_FIELD='django.db.models.AutoField'
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_STORAGE = 'whitenoise.storage.StaticFilesStorage'
-CSRF_TRUSTED_ORIGINS = ['https://web-production-fe850.up.railway.app']
+
+CSRF_TRUSTED_ORIGINS = ['https://moncomptable-production.up.railway.app']
